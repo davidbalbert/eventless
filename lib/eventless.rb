@@ -102,6 +102,26 @@ class BasicSocket < IO
   end
 end
 
+class Socket < BasicSocket
+  alias_method :connect_block, :connect
+
+  def connect(*args)
+    begin
+      flags = fcntl(Fcntl::F_GETFL, 0)
+      connect_nonblock(*args)
+      fcntl(Fcntl::F_SETFL, flags)
+    rescue IO::WaitWritable
+      fcntl(Fcntl::F_SETFL, flags)
+      STDERR.puts "connect: about to sleep"
+      Eventless.wait(:write, self)
+      retry
+    rescue Errno::EISCONN
+      fcntl(Fcntl::F_SETFL, flags)
+    end
+    STDERR.puts "Connected!"
+  end
+end
+
 #serv = TCPServer.new("127.0.0.1", 12345)
 #af, port, host, addr = serv.addr
 #s = serv.accept
