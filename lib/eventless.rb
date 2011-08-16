@@ -84,7 +84,6 @@ module Eventless
 end
 
 class BasicSocket < IO
-
   alias_method :recv_block, :recv
 
   def recv(*args)
@@ -95,7 +94,7 @@ class BasicSocket < IO
       fcntl(Fcntl::F_SETFL, flags)
     rescue IO::WaitReadable
       fcntl(Fcntl::F_SETFL, flags)
-      STDERR.puts "about to select: #{Socket.unpack_sockaddr_in(getpeername)}"
+      STDERR.puts "recv: about to select: #{Socket.unpack_sockaddr_in(getpeername)}"
       Eventless.wait(:read, self)
       retry
     end
