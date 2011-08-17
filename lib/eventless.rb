@@ -83,6 +83,26 @@ module Eventless
   end
 end
 
+# class IO
+  # alias_method :write_block, :write
+
+  # # XXX: NOT WORKING!!!!
+  # def write(*args)
+    # begin
+      # flags = fcntl(Fcntl::F_GETFL, 0)
+      # result = write_nonblock(*args)
+      # fcntl(Fcntl::F_SETFL, flags)
+    # rescue IO::WaitWritable, Errno::EINTR
+      # fcntl(Fcntl::F_SETFL, flags)
+      # STDERR.puts "write: about to select"
+      # Eventless.wait(:write, self)
+      # retry
+    # end
+    # STDERR.puts "done writing"
+    # result
+  # end
+# end
+
 class BasicSocket < IO
   alias_method :recv_block, :recv
 
