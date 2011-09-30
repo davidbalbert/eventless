@@ -15,13 +15,9 @@ module Eventless
 
   def self.wait(mode, io)
     fiber = Fiber.current
-    Eventless.loop.attach(mode, io) { fiber.resume }
-    Fiber.yield
+    Eventless.loop.attach(mode, io) { fiber.transfer }
+    Eventless.loop.transfer
     Eventless.loop.detach(mode, io)
-  end
-
-  def self.run
-    self.loop.run
   end
 
   def self.loop
@@ -37,6 +33,11 @@ module Eventless
 
     def initialize
       @read_fds, @write_fds = {}, {}
+      @fiber = Fiber.new { run }
+    end
+
+    def transfer(*args)
+      @fiber.transfer(*args)
     end
 
     def attach(mode, io, &callback)
@@ -61,6 +62,7 @@ module Eventless
       fd_hash.delete(io) { |el| raise ArgumentError, "#{io} is not attached to #{self} for #{mode}" }
     end
 
+    # XXX: don't do set addition, that's stupid
     def num_fds_to_read
       (@read_fds.keys + @write_fds.keys).size
     end
@@ -160,10 +162,8 @@ def eventless_get(host)
       puts str
       break if str == ""
     end
-  }.resume
+  }.transfer
 end
 
-eventless_get('www.google.com')
-eventless_get('news.ycombinator.com')
-
-Eventless.run
+# eventless_get('www.google.com')
+# eventless_get('news.ycombinator.com')
