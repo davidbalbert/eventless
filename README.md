@@ -5,6 +5,38 @@ Eventless aspires to be a concurrent networking library for Ruby that lets you w
 
 Right now it's all in one file and really more of an experiment, but I'm working hard on that.
 
+##How it works
+
+Here's how it works. Eventless monkey patches `Socket` to make it's API asynchronous. All of your code runs in a `Fiber`. You can make new fibers using `Eventless.spawn`. `Fiber.new` _will not_ work. Your code should look exactly the same, but when you call something that normally blocks, your fiber gets put to sleep on the event loop and gets woken up when there is data to be read or written.
+
+Because Eventless monkey patches the core library (eww, gross, I know), any networking library that is written in pure Ruby should just work (tm). You should eventually be able to write code like this:
+
+```ruby
+require 'eventless'
+require 'net/http'
+
+jobs = %w(http://www.google.com/, http://github.com/, http://ruby-lang.org/).map do |url|
+  Eventless.spawn do
+    Net::HTTP.get(URI.parse(url))
+  end
+end
+
+pages = Eventless.joinall(jobs)
+```
+
+It's really far away from that though. Right now you can almost do this:
+
+```ruby
+require 'eventless'
+
+fibers = []
+5.times do
+  fibers << Eventless.spawn { sleep 2 }
+end
+
+Eventless.joinall(fibers) # this isn't working yet
+```
+
 ##Install
 
 It will probably crash or not work, but:
