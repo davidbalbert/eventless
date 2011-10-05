@@ -15,11 +15,9 @@ end
 
 module Kernel
   def sleep(duration)
-    puts "about to sleep"
     fiber = Fiber.current
     Eventless.loop.timer(duration) { fiber.transfer }
     Eventless.loop.transfer
-    puts "done sleeping"
   end
 end
 
