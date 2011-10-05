@@ -3,6 +3,8 @@ require 'socket'
 require 'fcntl'
 require 'fiber'
 
+require 'cool.io'
+
 STDIN.sync = STDOUT.sync = true
 
 class Thread
@@ -11,7 +13,24 @@ class Thread
   end
 end
 
+module Kernel
+  def sleep(duration)
+    puts "about to sleep"
+    fiber = Fiber.current
+    Eventless.loop.timer(duration) { fiber.transfer }
+    Eventless.loop.transfer
+    puts "done sleeping"
+  end
+end
+
 module Eventless
+
+  def self.spawn(&callback)
+    f = Fiber.new &callback
+    Eventless.loop.schedule(f)
+
+    f
+  end
 
   def self.wait(mode, io)
     fiber = Fiber.current
@@ -24,6 +43,19 @@ module Eventless
     Loop.default
   end
 
+  class Fiber < Fiber
+    def initialize(&block)
+      # @callbacks
+      super do
+        block.call
+      end
+    end
+
+    # def callback(&block)
+      # @callbacks
+    # end
+  end
+
   class Loop
     attr_reader :running
 
@@ -33,6 +65,7 @@ module Eventless
 
     def initialize
       @read_fds, @write_fds = {}, {}
+      @loop = Coolio::Loop.new
       @fiber = Fiber.new { run }
     end
 
@@ -40,14 +73,35 @@ module Eventless
       @fiber.transfer(*args)
     end
 
+    def schedule(fiber)
+      # XXX: kind of hacky
+      # non-repeating timeout of 0
+      watcher = Coolio::TimerWatcher.new(0)
+      watcher.on_timer { fiber.transfer }
+
+      watcher.attach(@loop)
+    end
+
+    def timer(duration, &callback)
+      watcher = Coolio::TimerWatcher.new(duration)
+      watcher.on_timer &callback
+
+      watcher.attach(@loop)
+    end
+
     def attach(mode, io, &callback)
+      watcher = Coolio::IOWatcher.new(io, if mode == :read then 'r' else 'w' end)
       case mode
       when :read
-        @read_fds[io] = callback
+        watcher.on_readable &callback
+        @read_fds[io] = watcher
       when :write
-        @write_fds[io] = callback
+        watcher.on_writable &callback
+        @write_fds[io] = watcher
       else raise ArgumentError, "no such mode: #{mode}"
       end
+
+      watcher.attach(@loop)
     end
 
     def detach(mode, io)
@@ -59,28 +113,13 @@ module Eventless
         fd_hash = @write_fds
       else raise ArgumentError, "no such mode: #{mode}"
       end
-      fd_hash.delete(io) { |el| raise ArgumentError, "#{io} is not attached to #{self} for #{mode}" }
+      watcher = fd_hash.delete(io) { |el| raise ArgumentError, "#{io} is not attached to #{self} for #{mode}" }
+      watcher.detach
     end
 
-    # XXX: don't do set addition, that's stupid
-    def num_fds_to_read
-      (@read_fds.keys + @write_fds.keys).size
-    end
-
+    private
     def run
-      @running = true
-      while @running and num_fds_to_read > 0
-        rs, ws = IO.select(@read_fds.keys, @write_fds.keys)
-        rs.each do |fd|
-          @read_fds[fd].call
-        end
-
-        ws.each do |fd|
-          @write_fds[fd].call
-        end
-      end
-
-      @running = false
+      @loop.run
     end
   end
 end
@@ -151,19 +190,30 @@ end
 
 
 def eventless_get(host)
-  Fiber.new {
-    s = Socket.new(:INET, :STREAM)
-    sockaddr = Socket.pack_sockaddr_in(80, host)
-    s.connect(sockaddr)
-    s.write( "GET / HTTP/1.0\r\n\r\n" )
-    str = ""
-    loop do
-      str = s.recv(100000)
-      puts str
-      break if str == ""
-    end
-  }.transfer
+  s = Socket.new(:INET, :STREAM)
+  sockaddr = Socket.pack_sockaddr_in(80, host)
+  s.connect(sockaddr)
+  s.write( "GET / HTTP/1.0\r\n\r\n" )
+  site = ""
+  loop do
+    str = s.recv(100000)
+    site << str
+    # puts str
+    break if str == ""
+  end
+
+  STDERR.puts "#{host}: #{site.size}"
+  puts site
 end
 
-# eventless_get('www.google.com')
-# eventless_get('news.ycombinator.com')
+#jobs = %w(www.google.com news.ycombinator.com).map do |url|
+# jobs = %w(dave.is www.nick.is).map do |url|
+  # Eventless.spawn { eventless_get(url) }
+# end
+
+# STDERR.puts jobs
+
+2.times do
+  Eventless.spawn { sleep 2 }
+end
+
