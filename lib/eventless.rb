@@ -211,7 +211,9 @@ end
 
 # STDERR.puts jobs
 
-2.times do
-  Eventless.spawn { sleep 2 }
+5.times do
+  Eventless.spawn { puts 'about to sleep'; sleep 2; puts 'slept' }
 end
+
+5.times { Eventless.loop.transfer }
 
