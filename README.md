@@ -37,6 +37,8 @@ end
 Eventless.joinall(fibers) # this isn't working yet
 ```
 
+Even though you've spawned five fibers that sleep for two seconds a piece, this code should only take two seconds to run.
+
 ##Install
 
 It will probably crash or not work, but:
