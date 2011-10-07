@@ -251,9 +251,7 @@ fibers = []
   fibers << Eventless.spawn { puts 'about to sleep'; sleep 2; puts 'slept' }
 end
 
-fibers.each do |f|
-  f.join;
-end
+fibers.each { |f| f.join }
 
 Eventless.spawn { puts 'about to sleep'; sleep 2; puts 'slept' }.join
 Eventless.spawn { puts 'about to sleep'; sleep 2; puts 'slept' }.join
