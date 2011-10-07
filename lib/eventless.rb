@@ -24,12 +24,14 @@ end
 module Eventless
 
   def self.spawn(&callback)
-    f = Fiber.new &callback
+    f = Fiber.new(Eventless.loop.fiber, &callback)
     Eventless.loop.schedule(f)
 
     f
   end
 
+  # XXX: Probably want to change the name of this or make it private
+  # Eventless.wait might be confused with Eventless.join
   def self.wait(mode, io)
     fiber = Fiber.current
     Eventless.loop.attach(mode, io) { fiber.transfer }
@@ -42,20 +44,52 @@ module Eventless
   end
 
   class Fiber < Fiber
-    def initialize(&block)
-      # @callbacks
-      super do
+    def initialize(parent=Fiber.current, &block)
+      @parent = parent if parent
+      @links = []
+
+      super() do
         block.call
+
+        Eventless.loop.timer(0) do
+          @links.each { |callback| callback.call }
+        end
+
+        @dead = true
+        @parent.transfer if @parent
       end
     end
 
-    # def callback(&block)
-      # @callbacks
-    # end
+    def transfer(*args)
+      raise FiberError, "dead fiber called" if @dead
+      super(*args)
+    end
+
+    def alive?
+      return false if @dead
+      super
+    end
+
+    def dead?
+      not alive?
+    end
+
+    def join
+      return if dead?
+
+      # XXX: Will need to implement unlink to handle exceptions
+      link { Fiber.current.transfer }
+      Eventless.loop.transfer
+    end
+
+    def link(&callback)
+      @links << callback
+    end
+
   end
 
   class Loop
-    attr_reader :running
+    attr_reader :running, :fiber
 
     def self.default
       Thread.current._eventless_loop
@@ -64,6 +98,7 @@ module Eventless
     def initialize
       @read_fds, @write_fds = {}, {}
       @loop = Coolio::Loop.new
+      @root_fiber = Fiber.current
       @fiber = Fiber.new { run }
     end
 
@@ -74,15 +109,15 @@ module Eventless
     def schedule(fiber)
       # XXX: kind of hacky
       # non-repeating timeout of 0
-      watcher = Coolio::TimerWatcher.new(0)
-      watcher.on_timer { fiber.transfer }
-
-      watcher.attach(@loop)
+      timer(0) { fiber.transfer }
     end
 
     def timer(duration, &callback)
       watcher = Coolio::TimerWatcher.new(duration)
-      watcher.on_timer &callback
+      watcher.on_timer do
+        watcher.detach
+        callback.call
+      end
 
       watcher.attach(@loop)
     end
@@ -117,7 +152,12 @@ module Eventless
 
     private
     def run
-      @loop.run
+      # XXX: I have no idea if this extra loop is hacky or not
+      # gevent doesn't seem to have anything like it...
+      loop do
+        @loop.run
+        @root_fiber.transfer
+      end
     end
   end
 end
@@ -211,9 +251,14 @@ end
 
 # STDERR.puts jobs
 
+fibers = []
 5.times do
-  Eventless.spawn { puts 'about to sleep'; sleep 2; puts 'slept' }
+  fibers << Eventless.spawn { puts 'about to sleep'; sleep 2; puts 'slept' }
 end
 
-5.times { Eventless.loop.transfer }
+fibers.each do |f|
+  f.join;
+end
 
+Eventless.spawn { puts 'about to sleep'; sleep 2; puts 'slept' }.join
+Eventless.spawn { puts 'about to sleep'; sleep 2; puts 'slept' }.join
