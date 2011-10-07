@@ -49,11 +49,11 @@ It will probably crash or not work, but:
 
 ##Status
 
-There is currently no way to guarantee all the fibers will finish executing. The next step is to add a `join` type function to insure that they all finish.
+The event loop seems to be working. Fibers do not yet deal with exceptions. This will have to be added. I'm also not very happy with how the event loop internal api is turning out. Will refactor soon.
 
-I'm pretty sure the socket code in there doesn't work yet either. It doesn't seem to run concurrently yet, and I have to figure out why.
+I'm pretty sure the socket code in there doesn't work yet. It doesn't seem to run concurrently yet, and I have to figure out why. This might be due to bugs in the event loop that I may have fixed.
 
-On the bright side, `Kernel#sleep` successfully transfers control to the event loop rather than blocking. You do need to trigger the event loop manually for each fiber (example currently in the code).
+On the bright side, `Kernel#sleep` successfully transfers control to the event loop rather than blocking.
 
 ##Contributing
 
