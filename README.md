@@ -13,11 +13,11 @@ Because Eventless monkey patches the core library (eww, gross, I know), any netw
 
 ```ruby
 require 'eventless'
-require 'net/http'
+require 'open-uri'
 
 jobs = %w(http://www.google.com/, http://github.com/, http://ruby-lang.org/).map do |url|
   Eventless.spawn do
-    Net::HTTP.get(URI.parse(url))
+    open(url) { |f| f.read }
   end
 end
 
