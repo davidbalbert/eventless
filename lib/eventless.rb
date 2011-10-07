@@ -78,7 +78,8 @@ module Eventless
       return if dead?
 
       # XXX: Will need to implement unlink to handle exceptions
-      link { Fiber.current.transfer }
+      current = Fiber.current
+      link { current.transfer }
       Eventless.loop.transfer
     end
 
@@ -98,7 +99,6 @@ module Eventless
     def initialize
       @read_fds, @write_fds = {}, {}
       @loop = Coolio::Loop.new
-      @root_fiber = Fiber.current
       @fiber = Fiber.new { run }
     end
 
@@ -152,12 +152,7 @@ module Eventless
 
     private
     def run
-      # XXX: I have no idea if this extra loop is hacky or not
-      # gevent doesn't seem to have anything like it...
-      loop do
-        @loop.run
-        @root_fiber.transfer
-      end
+      @loop.run
     end
   end
 end
