@@ -44,16 +44,20 @@ Even though you've spawned five fibers that sleep for two seconds a piece, this 
 It will probably crash or not work, but:
 
     $ git clone git://github.com/davidbalbert/eventless.git
-    $ cd eventless
-    $ ruby lib/eventless.rb
+    $ cd eventless/examples       # run some of these
 
 ##Status
 
-The event loop seems to be working. Fibers do not yet deal with exceptions. This will have to be added. I'm also not very happy with how the event loop internal api is turning out. Will refactor soon.
+###What works
+- The event loop
+- Exception handling in `Fiber`
+- `Kernel#sleep`
 
-I'm pretty sure the socket code in there doesn't work yet. It doesn't seem to run concurrently yet, and I have to figure out why. This might be due to bugs in the event loop that I may have fixed.
+###What doesn't work
+- The socket code
+- Everything else
 
-On the bright side, `Kernel#sleep` successfully transfers control to the event loop rather than blocking.
+The socket code doesn't seem to run concurrently yet. I have to figure out why. This might be due to bugs in the event loop that I may have fixed.
 
 ##Contributing
 
