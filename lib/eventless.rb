@@ -78,6 +78,8 @@ module Eventless
 
     def link(obj, method)
       @links << [obj, method]
+      # XXX: should make this check if the fiber is already dead and then
+      # schedule immediately
     end
 
     def unlink(obj, method)
@@ -256,6 +258,3 @@ fibers = []
 end
 
 fibers.each { |f| f.join }
-
-Eventless.spawn { puts 'about to sleep'; sleep 2; puts 'slept' }.join
-Eventless.spawn { puts 'about to sleep'; sleep 2; puts 'slept' }.join
