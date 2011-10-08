@@ -35,14 +35,21 @@ module Eventless
   end
 
   class Fiber < Fiber
+    attr_reader :result, :exception
     def initialize(parent=Fiber.current, &block)
       @parent = parent if parent
       @links = []
+      @exception = @result = nil
 
       # It seems without (), super passes all the args that we're
       # called with
       super() do
-        block.call
+        begin
+          @result = block.call
+        rescue StandardError => e
+          @exception = e
+          print_exception
+        end
 
         Eventless.loop.timer(0) do
           @links.each { |obj, method| obj.send(method, self) }
@@ -51,6 +58,10 @@ module Eventless
         @dead = true
         @parent.transfer if @parent
       end
+    end
+
+    def print_exception
+      puts "#{@exception.class}: #{@exception.message}", @exception.backtrace
     end
 
     def transfer(*args)
@@ -65,6 +76,10 @@ module Eventless
 
     def dead?
       not alive?
+    end
+
+    def success?
+      @exception.nil?
     end
 
     def join
@@ -252,9 +267,15 @@ end
 
 # STDERR.puts jobs
 
-fibers = []
-5.times do
-  fibers << Eventless.spawn { puts 'about to sleep'; sleep 2; puts 'slept' }
-end
+#fibers = []
+#5.times do
+  #fibers << Eventless.spawn { puts 'about to sleep'; sleep 2; puts 'slept' }
+#end
 
-fibers.each { |f| f.join }
+#fibers.each { |f| f.join }
+
+f1 = Eventless.spawn { puts 'before exception'; raise "Hello, exception!" }
+f2 = Eventless.spawn { puts 'no exception' }
+
+f1.join
+f2.join
