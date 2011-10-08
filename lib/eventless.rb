@@ -30,15 +30,6 @@ module Eventless
     f
   end
 
-  # XXX: Probably want to change the name of this or make it private
-  # Eventless.wait might be confused with Eventless.join
-  def self.wait(mode, io)
-    fiber = Fiber.current
-    Eventless.loop.attach(mode, io) { fiber.transfer }
-    Eventless.loop.transfer
-    Eventless.loop.detach(mode, io)
-  end
-
   def self.loop
     Loop.default
   end
@@ -48,6 +39,8 @@ module Eventless
       @parent = parent if parent
       @links = []
 
+      # It seems without (), super passes all the args that we're
+      # called with
       super() do
         block.call
 
@@ -108,6 +101,13 @@ module Eventless
 
     def transfer(*args)
       @fiber.transfer(*args)
+    end
+
+    def wait(mode, io)
+      fiber = Fiber.current
+      attach(mode, io) { fiber.transfer }
+      transfer
+      detach(mode, io)
     end
 
     def schedule(fiber)
@@ -193,7 +193,7 @@ class BasicSocket < IO
     rescue IO::WaitReadable
       fcntl(Fcntl::F_SETFL, flags)
       STDERR.puts "recv: about to select: #{Socket.unpack_sockaddr_in(getpeername)}"
-      Eventless.wait(:read, self)
+      Eventless.loop.wait(:read, self)
       retry
     end
     mesg
@@ -211,7 +211,7 @@ class Socket < BasicSocket
     rescue IO::WaitWritable
       fcntl(Fcntl::F_SETFL, flags)
       STDERR.puts "connect: about to sleep"
-      Eventless.wait(:write, self)
+      Eventless.loop.wait(:write, self)
       retry
     rescue Errno::EISCONN
       fcntl(Fcntl::F_SETFL, flags)
