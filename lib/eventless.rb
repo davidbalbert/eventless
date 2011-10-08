@@ -52,7 +52,7 @@ module Eventless
         block.call
 
         Eventless.loop.timer(0) do
-          @links.each { |callback| callback.call }
+          @links.each { |obj, method| obj.send(method, self) }
         end
 
         @dead = true
@@ -79,12 +79,16 @@ module Eventless
 
       # XXX: Will need to implement unlink to handle exceptions
       current = Fiber.current
-      link { current.transfer }
+      link(Fiber.current, :transfer)
       Eventless.loop.transfer
     end
 
-    def link(&callback)
-      @links << callback
+    def link(obj, method)
+      @links << [obj, method]
+    end
+
+    def unlink(obj, method)
+      @links.remove([obj, method])
     end
 
   end
