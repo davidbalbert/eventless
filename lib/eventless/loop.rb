@@ -24,29 +24,14 @@ module Eventless
       @fiber.transfer(*args)
     end
 
-    def wait(mode, io)
+    def io(mode, io)
       fiber = Fiber.current
-      attach(mode, io) { fiber.transfer }
-      transfer
-      detach(mode, io)
-    end
-
-    def sleep(duration)
-      fiber = Fiber.current
-      watcher = Eventless.loop.timer(duration) { fiber.transfer }
+      io_attach(mode, io) { fiber.transfer }
       begin
-        Eventless.loop.transfer
+        transfer
       ensure
-        watcher.detach
+        io_detach(mode, io)
       end
-
-      duration.round # returned what we said we were going to sleep
-    end
-
-    def schedule(fiber)
-      # XXX: kind of hacky
-      # non-repeating timeout of 0
-      timer(0) { fiber.transfer }
     end
 
     def timer(duration, &callback)
@@ -56,10 +41,42 @@ module Eventless
         callback.call
       end
 
+      watcher
+    end
+
+    def sleep(duration)
+      fiber = Fiber.current
+      watcher = timer(duration) { fiber.transfer }
+      wait(watcher)
+
+      # if we return, then we've slept the full amount of time, so just return
+      # what we said we were going to sleep. The only way for us to stop
+      # sleeping early is if there's a Timeout, which is an exception, so we'll
+      # never return from Loop#wait above.
+      duration.round
+    end
+
+    def schedule(fiber)
+      # XXX: kind of hacky
+      # non-repeating timeout of 0
+      watcher = timer(0) { fiber.transfer }
       watcher.attach(@loop)
     end
 
-    def attach(mode, io, &callback)
+    def wait(watcher)
+      watcher.attach(@loop)
+      begin
+        transfer
+      ensure
+        watcher.detach if watcher.attached?
+      end
+    end
+
+    def attach(watcher)
+      watcher.attach(@loop)
+    end
+
+    def io_attach(mode, io, &callback)
       watcher = Coolio::IOWatcher.new(io, if mode == :read then 'r' else 'w' end)
       case mode
       when :read
@@ -74,7 +91,7 @@ module Eventless
       watcher.attach(@loop)
     end
 
-    def detach(mode, io)
+    def io_detach(mode, io)
       fd_hash = nil
       case mode
       when :read

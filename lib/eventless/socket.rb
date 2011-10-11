@@ -33,7 +33,7 @@ class BasicSocket < IO
     rescue IO::WaitReadable
       fcntl(Fcntl::F_SETFL, flags)
       STDERR.puts "recv: about to select: #{Socket.unpack_sockaddr_in(getpeername)}"
-      Eventless.loop.wait(:read, self)
+      Eventless.loop.io(:read, self)
       retry
     end
     mesg
@@ -51,7 +51,7 @@ class Socket < BasicSocket
     rescue IO::WaitWritable
       fcntl(Fcntl::F_SETFL, flags)
       STDERR.puts "connect: about to sleep"
-      Eventless.loop.wait(:write, self)
+      Eventless.loop.io(:write, self)
       retry
     rescue Errno::EISCONN
       fcntl(Fcntl::F_SETFL, flags)
