@@ -15,7 +15,6 @@ module Eventless
     end
 
     def initialize
-      @read_fds, @write_fds = {}, {}
       @loop = Coolio::Loop.new
       @fiber = Fiber.new { run }
     end
@@ -26,12 +25,18 @@ module Eventless
 
     def io(mode, io)
       fiber = Fiber.current
-      io_attach(mode, io) { fiber.transfer }
-      begin
-        transfer
-      ensure
-        io_detach(mode, io)
+      callback = proc { fiber.transfer }
+
+      watcher = Coolio::IOWatcher.new(io, if mode == :read then 'r' else 'w' end)
+      case mode
+      when :read
+        watcher.on_readable &callback
+      when :write
+        watcher.on_writable &callback
+      else raise ArgumentError, "no such mode: #{mode}"
       end
+
+      watcher
     end
 
     def timer(duration, &callback)
@@ -74,34 +79,6 @@ module Eventless
 
     def attach(watcher)
       watcher.attach(@loop)
-    end
-
-    def io_attach(mode, io, &callback)
-      watcher = Coolio::IOWatcher.new(io, if mode == :read then 'r' else 'w' end)
-      case mode
-      when :read
-        watcher.on_readable &callback
-        @read_fds[io] = watcher
-      when :write
-        watcher.on_writable &callback
-        @write_fds[io] = watcher
-      else raise ArgumentError, "no such mode: #{mode}"
-      end
-
-      watcher.attach(@loop)
-    end
-
-    def io_detach(mode, io)
-      fd_hash = nil
-      case mode
-      when :read
-        fd_hash = @read_fds
-      when :write
-        fd_hash = @write_fds
-      else raise ArgumentError, "no such mode: #{mode}"
-      end
-      watcher = fd_hash.delete(io) { |el| raise ArgumentError, "#{io} is not attached to #{self} for #{mode}" }
-      watcher.detach
     end
 
     private
