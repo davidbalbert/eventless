@@ -1,3 +1,9 @@
+#!/usr/bin/env ruby
+
+$:.unshift File.join(File.dirname(__FILE__), "..", "lib")
+require 'eventless'
+
+
 # none of this works. it's just scratch space
 
 #serv = TCPServer.new("127.0.0.1", 12345)
@@ -24,8 +30,14 @@ def eventless_get(host)
 end
 
 #jobs = %w(www.google.com news.ycombinator.com).map do |url|
-# jobs = %w(dave.is www.nick.is).map do |url|
-  # Eventless.spawn { eventless_get(url) }
-# end
+#jobs = %w(dave.is www.nick.is).map do |url|
 
-# STDERR.puts jobs
+# get a whole bunch of google's ips at the same time. Domain name resolution
+# blocks so we're using ip addresses for now
+jobs = %w(74.125.226.240 74.125.226.241 74.125.226.242 74.125.226.243 74.125.226.244).map do |url|
+  Eventless.spawn { eventless_get(url) }
+end
+
+jobs.each { |j| j.join }
+
+STDERR.puts jobs
