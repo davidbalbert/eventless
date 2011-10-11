@@ -2,6 +2,7 @@ require 'eventless/version'
 require 'eventless/fiber'
 require 'eventless/loop'
 require 'eventless/socket'
+require 'eventless/timeout'
 
 module Kernel
   alias_method :sleep_block, :sleep
