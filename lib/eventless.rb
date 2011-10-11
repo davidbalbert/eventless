@@ -4,10 +4,10 @@ require 'eventless/loop'
 require 'eventless/socket'
 
 module Kernel
+  alias_method :sleep_block, :sleep
+
   def sleep(duration)
-    fiber = Fiber.current
-    Eventless.loop.timer(duration) { fiber.transfer }
-    Eventless.loop.transfer
+    Eventless.loop.sleep(duration)
   end
 end
 

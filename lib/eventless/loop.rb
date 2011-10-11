@@ -31,6 +31,18 @@ module Eventless
       detach(mode, io)
     end
 
+    def sleep(duration)
+      fiber = Fiber.current
+      watcher = Eventless.loop.timer(duration) { fiber.transfer }
+      begin
+        Eventless.loop.transfer
+      ensure
+        watcher.detach
+      end
+
+      duration.round # returned what we said we were going to sleep
+    end
+
     def schedule(fiber)
       # XXX: kind of hacky
       # non-repeating timeout of 0
