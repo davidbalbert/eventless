@@ -6,7 +6,6 @@ class Fiber
   alias_method :initialize_original, :initialize
   def initialize(parent=Fiber.current, &block)
     @links = []
-    exception = result = to_raise = nil
 
     initialize_original do
       begin
@@ -74,7 +73,6 @@ class Fiber
     return if dead?
 
     # XXX: Will need to implement unlink to handle exceptions
-    current = Fiber.current
     link(Fiber.current, :transfer)
     Eventless.loop.transfer
   end
