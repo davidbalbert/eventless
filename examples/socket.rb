@@ -21,12 +21,10 @@ def eventless_get(host)
   loop do
     str = s.recv(100000)
     site << str
-    # puts str
     break if str == ""
   end
 
   STDERR.puts "#{host}: #{site.size}"
-  puts site
 end
 
 #jobs = %w(www.google.com news.ycombinator.com).map do |url|
@@ -39,5 +37,3 @@ jobs = %w(74.125.226.240 74.125.226.241 74.125.226.242 74.125.226.243 74.125.226
 end
 
 jobs.each { |j| j.join }
-
-STDERR.puts jobs
