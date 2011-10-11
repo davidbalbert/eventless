@@ -20,9 +20,10 @@ class Fiber
         print_exception
       end
 
-      Eventless.loop.timer(0) do
+      watcher = Eventless.loop.timer(0) do
         @links.each { |obj, method| obj.send(method, self) }
       end
+      Eventless.loop.attach(watcher)
 
       Fiber.current[:dead] = true
       parent.transfer if parent
