@@ -6,6 +6,7 @@ class Fiber
   alias_method :initialize_original, :initialize
   def initialize(parent=Fiber.current, &block)
     @links = []
+    @dead = false
 
     initialize_original do
       begin
@@ -14,7 +15,7 @@ class Fiber
 
         @result = block.call
       rescue StandardError => e
-        Fiber.current[:dead] = true
+        @dead = true
         @exception = e
         print_exception
       end
@@ -24,7 +25,7 @@ class Fiber
       end
       Eventless.loop.attach(watcher)
 
-      Fiber.current[:dead] = true
+      @dead = true
       parent.transfer if parent
     end
   end
@@ -35,7 +36,7 @@ class Fiber
 
   alias_method :transfer_original, :transfer
   def transfer(*args)
-    raise FiberError, "dead fiber called" if self[:dead]
+    raise FiberError, "dead fiber called" if @dead
     transfer_original(*args) # doesn't return until we get transfered back
 
     raise_after_transfer!
@@ -57,7 +58,7 @@ class Fiber
 
   alias_method :alive_original?, :alive?
   def alive?
-    return false if self[:dead]
+    return false if @dead
     alive_original?
   end
 
@@ -72,7 +73,6 @@ class Fiber
   def join
     return if dead?
 
-    # XXX: Will need to implement unlink to handle exceptions
     link(Fiber.current, :transfer)
     Eventless.loop.transfer
   end
@@ -85,17 +85,5 @@ class Fiber
 
   def unlink(obj, method)
     @links.remove([obj, method])
-  end
-
-  def [](key)
-    fiber_vars[key]
-  end
-
-  def []=(key, val)
-    fiber_vars[key] = val
-  end
-
-  def fiber_vars
-    @fiber_vars ||= {}
   end
 end
