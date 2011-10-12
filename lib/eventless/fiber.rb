@@ -84,6 +84,18 @@ class Fiber
   end
 
   def unlink(obj, method)
-    @links.remove([obj, method])
+    @links.delete([obj, method])
+  end
+
+  def [](key)
+    fiber_vars[key]
+  end
+
+  def []=(key, val)
+    fiber_vars[key] = val
+  end
+
+  def fiber_vars
+    @fiber_vars ||= {}
   end
 end
