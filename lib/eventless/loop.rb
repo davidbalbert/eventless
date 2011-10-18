@@ -16,7 +16,7 @@ module Eventless
 
     def initialize
       @loop = Coolio::Loop.new
-      @fiber = Fiber.new { run }
+      @fiber = Fiber.new(Fiber.current) { run }
     end
 
     def transfer(*args)
@@ -85,7 +85,10 @@ module Eventless
 
     private
     def run
-      @loop.run
+      loop do
+        @loop.run
+        @fiber.parent.transfer_and_raise "This code would block forever!"
+      end
     end
   end
 end
