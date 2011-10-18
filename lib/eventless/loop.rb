@@ -20,6 +20,8 @@ module Eventless
     end
 
     def transfer(*args)
+      raise "You can't call a blocking function from the event loop" if Fiber.current == self
+
       @fiber.transfer(*args)
     end
 
