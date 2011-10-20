@@ -19,11 +19,11 @@ require 'open-uri'
 # all of these are google.com
 jobs = %w(74.125.226.240 74.125.226.241 74.125.226.242 74.125.226.243 74.125.226.244).map do |url|
   Eventless.spawn do
-    open(url) { |f| f.read }
+    open(url) { |f| puts f.read }
   end
 end
 
-pages = Eventless.joinall(jobs)
+fibers.each { |f| f.join }
 ```
 
 You can also do this, which is admittedly, pretty silly:
