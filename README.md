@@ -67,4 +67,4 @@ The current goal is to replace all blocking methods in `Socket` with API compati
 
 ##License
 
-Eventless is licensed under the MIT License. See LICENSE.md for more information.
+Eventless is licensed under the MIT License. See LICENSE for more information.
