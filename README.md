@@ -3,11 +3,11 @@ Eventless
 
 Eventless aspires to be a concurrent networking library for Ruby that lets you write asynchronous, event driven code that looks like normal, blocking code. It uses Fibers, so it requires Ruby 1.9. It also uses Marc Lehmann's libev (currently via cool.io). Eventless is inspired heavily by [gevent](http://gevent.org).
 
-Right now it's all in one file and really more of an experiment, but I'm working hard on that.
+Right now it's more of an experiment than an actual library, but I'm working hard on that.
 
 ##How it works
 
-Eventless monkey patches `Socket` to make it's API asynchronous. All of your code runs in `Fiber`s. You can make new fibers using `Eventless.spawn`. `Fiber.new` _will not_ work. Your code should look exactly the same, but when you call something that normally blocks, your fiber gets put to sleep on the event loop and gets woken up when there is data to be read or written.
+Eventless monkey patches `Socket` to make its API asynchronous. All of your code runs in a `Fiber`. You can make new fibers using `Eventless.spawn`. `Fiber.new` _will not_ work. Your code should look exactly the same, but when you call something that normally blocks, your fiber gets put to sleep on the event loop and gets woken up when there is data to be read or written.
 
 Because Eventless monkey patches the core library (eww, gross, I know), any networking library that is written in pure Ruby should just work (tm). You should eventually be able to write code like this:
 
