@@ -16,16 +16,18 @@ module Eventless
 
     def initialize
       @loop = Coolio::Loop.new
-      @fiber = Fiber.new { run }
+      @fiber = Fiber.new(Fiber.current) { run }
     end
 
     def transfer(*args)
+      raise "You can't call a blocking function from the event loop" if Fiber.current == self
+
       @fiber.transfer(*args)
     end
 
-    def io(mode, io)
+    def io(mode, io, &callback)
       fiber = Fiber.current
-      callback = proc { fiber.transfer }
+      callback = proc { fiber.transfer } unless callback
 
       watcher = Coolio::IOWatcher.new(io, if mode == :read then 'r' else 'w' end)
       case mode
@@ -83,7 +85,10 @@ module Eventless
 
     private
     def run
-      @loop.run
+      loop do
+        @loop.run
+        @fiber.parent.transfer_and_raise "This code would block forever!"
+      end
     end
   end
 end

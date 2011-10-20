@@ -1,12 +1,13 @@
 require 'fiber'
 
 class Fiber
-  attr_reader :result, :exception
+  attr_reader :result, :exception, :parent
 
   alias_method :initialize_original, :initialize
   def initialize(parent=Fiber.current, &block)
     @links = []
     @dead = false
+    @parent = parent
 
     initialize_original do
       begin
@@ -26,7 +27,7 @@ class Fiber
       Eventless.loop.attach(watcher)
 
       @dead = true
-      parent.transfer if parent
+      @parent.transfer if @parent
     end
   end
 
@@ -84,6 +85,18 @@ class Fiber
   end
 
   def unlink(obj, method)
-    @links.remove([obj, method])
+    @links.delete([obj, method])
+  end
+
+  def [](key)
+    fiber_vars[key]
+  end
+
+  def []=(key, val)
+    fiber_vars[key] = val
+  end
+
+  def fiber_vars
+    @fiber_vars ||= {}
   end
 end
