@@ -26,7 +26,7 @@ end
 pages = Eventless.joinall(jobs)
 ```
 
-It's really far away from that though. Right now you can just do this:
+You can also do this, which is admittedly, pretty silly:
 
 ```ruby
 require 'eventless'
