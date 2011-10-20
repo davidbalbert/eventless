@@ -4,7 +4,6 @@ require 'eventless/loop'
 require 'eventless/socket'
 require 'eventless/select'
 require 'eventless/timeout'
-require 'eventless/linkable'
 require 'eventless/event'
 
 module Kernel
