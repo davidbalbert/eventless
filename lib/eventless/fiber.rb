@@ -21,10 +21,10 @@ class Fiber
         print_exception
       end
 
-      watcher = Eventless.loop.timer(0) do
+      @watcher = Eventless.loop.timer(0) do
         @links.each { |obj, method| obj.send(method, self) }
       end
-      Eventless.loop.attach(watcher)
+      Eventless.loop.attach(@watcher)
 
       @dead = true
       @parent.transfer if @parent
@@ -80,8 +80,10 @@ class Fiber
 
   def link(obj, method)
     @links << [obj, method]
-    # XXX: should make this check if the fiber is already dead and then
-    # schedule immediately
+
+    if dead? && !@watcher.attached?
+      Eventless.loop.attach(@watcher)
+    end
   end
 
   def unlink(obj, method)
