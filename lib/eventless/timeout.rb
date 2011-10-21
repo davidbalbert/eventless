@@ -1,3 +1,5 @@
+require 'timeout'
+
 module Eventless
   class Timeout < StandardError
     # if seconds is nil, the timeout will be fake and start and
@@ -43,4 +45,28 @@ module Eventless
       @watcher.detach if @watcher.attached?
     end
   end
+end
+
+module Timeout
+  alias_method :timeout_old, :timeout
+
+  def timeout(sec, klass = nil)
+    return yield(sec) if sec == nil or sec.zero?
+    exception = klass || Error
+
+    timeout = Eventless::Timeout.new(sec).start
+    begin
+      return yield(sec)
+    rescue Eventless::Timeout
+      raise exception, "execution expired"
+    ensure
+      timeout.stop
+    end
+  end
+
+  module_function :timeout
+end
+
+def timeout(n, e = nil, &block)
+  Timeout::timeout(n, e, &block)
 end
