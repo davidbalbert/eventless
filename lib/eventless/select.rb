@@ -17,35 +17,45 @@ class IO
 end
 
 module Eventless
-  # TODO: Need to implement select with timeout. How do I test it?
   def self.select(read_array, write_array=[], error_array=[], timeout=nil)
     watchers = []
     ready = SelectResults.new
 
     write_array = [] if write_array.nil?
 
+    timeout = Timeout.new(timeout).start
+
     #STDERR.puts "about to select", read_array.inspect, write_array.inspect
     STDERR.puts "select"
 
     begin
       read_array.each do |io|
-        watcher = Eventless.loop.io(:read, io) { ready.append_read(io) }
+        watcher = Eventless.loop.io(:read, io) do
+          ready.append_read(io)
+        end
+
         Eventless.loop.attach(watcher)
         watchers << watcher
       end
 
       write_array.each do |io|
-        watcher = Eventless.loop.io(:write, io) { ready.append_write(io) }
+        watcher = Eventless.loop.io(:write, io) do
+          ready.append_write(io)
+        end
+
         Eventless.loop.attach(watcher)
         watchers << watcher
       end
 
-      ready.event.wait(timeout)
+      ready.event.wait
       return ready.to_read, ready.to_write, []
+    rescue Timeout => t
+      raise t unless t == timeout
+      return nil
     ensure
       watchers.each { |w| w.detach }
+      timeout.stop
     end
-
   end
 
   class SelectResults

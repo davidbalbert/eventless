@@ -37,7 +37,7 @@ module Eventless
       @flag = false
     end
 
-    def wait(timeout=nil)
+    def wait
       return true if set?
 
       link(Fiber.current, :transfer)
