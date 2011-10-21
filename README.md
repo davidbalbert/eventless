@@ -54,10 +54,10 @@ It will probably crash or not work, but:
 - The event loop
 - Exception handling in `Fiber`
 - `Kernel#sleep`
-- Timeouts
-- `open-uri`
 - `IO.select`
 - `Socket#recv`, `Socket#connect`, `Socket#write`, and `TCPSocket.new`
+- `timeout.rb`
+- `open-uri`
 
 ###What doesn't work
 - All the other `Socket` code.
