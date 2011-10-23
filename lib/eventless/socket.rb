@@ -97,3 +97,27 @@ class TCPSocket
     end
   end
 end
+
+class TCPServer
+
+  class << self
+    def new(hostname=nil, port)
+      sock = nil
+      Addrinfo.foreach(hostname, port, :INET, :STREAM, nil, Socket::AI_PASSIVE) do |ai|
+        begin
+          sock = Socket.new(ai.afamily, ai.socktype, ai.protocol)
+          sock.setsockopt(:SOCKET, :REUSEADDR, true)
+          sock.bind(ai)
+        rescue
+          sock.close
+        else
+          break
+        end
+      end
+
+      sock.listen(5)
+
+      sock
+    end
+  end
+end

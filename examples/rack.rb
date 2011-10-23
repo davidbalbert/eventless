@@ -4,9 +4,8 @@
 $:.unshift File.join(File.dirname(__FILE__), "..", "lib")
 
 require 'rack'
-#require 'eventless'
+require 'eventless'
 
-#require 'socket'
 #require 'kgb'
 
 #KGB.spy_on(Socket, TCPSocket, TCPServer)
