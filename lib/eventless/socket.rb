@@ -20,24 +20,71 @@ class BasicSocket < IO
     result
   end
 
-  ################
-  # Receiving data
-  alias_method :recv_block, :recv
-  def recv(*args)
-    STDERR.puts "recv"
-    mesg = ""
+  alias_method :sendmsg_block, :sendmsg
+  def sendmsg(*args)
+    STDERR.puts "sendmsg"
     begin
       flags = fcntl(Fcntl::F_GETFL, 0)
-      mesg << recv_nonblock(*args)
+      result = sendmsg_nonblock(*args)
+      fcntl(Fcntl::F_SETFL, flags)
+    rescue IO::WaitWritable
+      fcntl(Fcntl::F_SETFL, flags)
+      wait(Eventless.loop.io(:write, self))
+      retry
+    end
+
+    result
+  end
+
+  ################
+  # Receiving data
+  alias_method :read_block, :read
+  def read(*args)
+    STDERR.puts "read"
+    begin
+      flags = fcntl(Fcntl::F_GETFL, 0)
+      mseg = read_nonblock(*args)
       fcntl(Fcntl::F_SETFL, flags)
     rescue IO::WaitReadable
       fcntl(Fcntl::F_SETFL, flags)
-      STDERR.puts "recv: about to select: #{Socket.unpack_sockaddr_in(getpeername)}"
+      wait(Eventless.loop.io(:write, self))
+      retry
+    end
+
+    mesg
+  end
+
+
+  alias_method :recv_block, :recv
+  def recv(*args)
+    STDERR.puts "recv"
+    begin
+      flags = fcntl(Fcntl::F_GETFL, 0)
+      mesg = recv_nonblock(*args)
+      fcntl(Fcntl::F_SETFL, flags)
+    rescue IO::WaitReadable
+      fcntl(Fcntl::F_SETFL, flags)
       wait(Eventless.loop.io(:read, self))
       retry
     end
 
     mesg
+  end
+
+  alias_method :recvmsg_block, :recvmsg
+  def recvmsg(*args)
+    STDERR.puts "recvmsg"
+    begin
+      flags = fcntl(Fcntl::F_GETFL, 0)
+      msg = recvmsg_nonblock(*args)
+      fcntl(Fcntl::F_SETFL, flags)
+    rescue IO::WaitReadable
+      fcntl(Fcntl::F_SETFL, flags)
+      wait(Eventless.loop.io(:read, self))
+      retry
+    end
+
+    msg
   end
 
   private
@@ -69,6 +116,38 @@ class Socket < BasicSocket
       fcntl(Fcntl::F_SETFL, flags)
     end
     #STDERR.puts "Connected!"
+  end
+
+  alias_method :accept_block, :accept
+  def accept(*args)
+    STDERR.puts "accept"
+    begin
+      flags = fcntl(Fcntl::F_GETFL, 0)
+      sock_pair = accept_nonblock(*args)
+      fcntl(Fcntl::F_SETFL, flags)
+    rescue IO::WaitReadable, Errno::EINTR
+      fcntl(Fcntl::F_SETFL, flags)
+      wait(Eventless.loop.io(:read, self))
+      retry
+    end
+
+    sock_pair
+  end
+
+  alias_method :recvfrom_block, :recvfrom
+  def recvfrom(*args)
+    STDERR.puts "recvfrom"
+    begin
+      flags = fcntl(Fcntl::F_GETFL, 0)
+      pair = recvfrom_nonblock(*args)
+      fcntl(Fcntl::F_SETFL, flags)
+    rescue IO::WaitReadable
+      fcntl(Fcntl::F_SETFL, flags)
+      wait(Eventless.loop.io(:read, self))
+      retry
+    end
+
+    pair
   end
 end
 
