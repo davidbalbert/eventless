@@ -57,8 +57,8 @@ This doesn't really work yet, but here's the start. Eventless is going to test a
 
 By default mspec will test against the `ruby` binary. You can specify the binary name or path by setting TARGET:
 
-    $ TARGET=ruby19 spec
-    $ TARGET=/usr/local/bin/ruby spec
+    $ TARGET=ruby19 rake spec
+    $ TARGET=/usr/local/bin/ruby rake spec
 
 ##Status
 
