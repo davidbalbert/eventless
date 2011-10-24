@@ -48,6 +48,18 @@ It will probably crash or not work, but:
     $ git clone git://github.com/davidbalbert/eventless.git
     $ cd eventless/examples # run some of these
 
+##Test
+
+This doesn't really work yet, but here's the start. Eventless is going to test against rubyspec. Here's how you do it:
+
+    $ rake spec:deps # clones rubyspec and mspec
+    $ rake spec # right now this just runs the socket specs without eventless
+
+By default mspec will test against the `ruby` binary. You can specify the binary name or path by setting TARGET:
+
+    $ TARGET=ruby19 spec
+    $ TARGET=/usr/local/bin/ruby spec
+
 ##Status
 
 ###What works
