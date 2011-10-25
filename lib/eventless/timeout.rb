@@ -67,6 +67,7 @@ module Timeout
   module_function :timeout
 end
 
+undef timeout
 def timeout(n, e = nil, &block)
   Timeout::timeout(n, e, &block)
 end

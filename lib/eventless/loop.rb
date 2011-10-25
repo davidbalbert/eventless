@@ -1,4 +1,8 @@
-require 'cool.io'
+require 'eventless/core_ext/silence_warnings'
+
+silence_warnings do
+  require 'cool.io'
+end
 
 class Thread
   def _eventless_loop
@@ -32,9 +36,9 @@ module Eventless
       watcher = Coolio::IOWatcher.new(io, if mode == :read then 'r' else 'w' end)
       case mode
       when :read
-        watcher.on_readable &callback
+        watcher.on_readable(&callback)
       when :write
-        watcher.on_writable &callback
+        watcher.on_writable(&callback)
       else raise ArgumentError, "no such mode: #{mode}"
       end
 

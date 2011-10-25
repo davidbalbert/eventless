@@ -37,7 +37,7 @@ class Fiber
 
   alias_method :transfer_original, :transfer
   def transfer(*args)
-    raise FiberError, "dead fiber called" if @dead
+    raise FiberError, "dead fiber called" if dead
     transfer_original(*args) # doesn't return until we get transfered back
 
     raise_after_transfer!
@@ -100,5 +100,10 @@ class Fiber
 
   def fiber_vars
     @fiber_vars ||= {}
+  end
+
+  private
+  def dead
+    @dead if defined? @dead
   end
 end

@@ -15,8 +15,10 @@ if Dir['test/mspec/*'].empty? or Dir['test/rubyspec/*'].empty?
 else
   desc "Run specs"
   task :spec do
-    # this doesn't really work. It doesn't load eventless first
-    sh "test/mspec/bin/mspec -t #{ENV["TARGET"] || "ruby" } -Ilib -reventless test/rubyspec/library/socket/"
+    # eventually, we should be able to run this... maybe :)
+    # sh "test/mspec/bin/mspec -t #{ENV["TARGET"] || "ruby" } -Ilib -reventless test/rubyspec/library/socket/"
+
+    sh "test/mspec/bin/mspec -t #{ENV["TARGET"] || "ruby" } -Ilib -reventless test/rubyspec/library/socket/basicsocket/close_read_spec.rb"
   end
 end
 
