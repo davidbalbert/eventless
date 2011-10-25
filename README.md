@@ -60,6 +60,8 @@ By default mspec will test against the `ruby` binary. You can specify the binary
     $ TARGET=ruby19 rake spec
     $ TARGET=/usr/local/bin/ruby rake spec
 
+Remember, right now Eventless only works on Ruby 1.9.
+
 ##Status
 
 ###What works
