@@ -16,7 +16,7 @@ else
   desc "Run specs"
   task :spec do
     # this doesn't really work. It doesn't load eventless first
-    sh "test/mspec/bin/mspec -t #{ENV["TARGET"] || "ruby" } test/rubyspec/library/socket/"
+    sh "test/mspec/bin/mspec -t #{ENV["TARGET"] || "ruby" } -Ilib -reventless test/rubyspec/library/socket/"
   end
 end
 
