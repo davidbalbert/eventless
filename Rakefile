@@ -2,7 +2,13 @@ require 'bundler/gem_tasks'
 
 SPECS = [
   "test/rubyspec/library/socket/basicsocket/close_read_spec.rb",
-  "test/rubyspec/library/socket/basicsocket/close_write_spec.rb"
+  "test/rubyspec/library/socket/basicsocket/close_write_spec.rb",
+  "test/rubyspec/library/socket/basicsocket/for_fd_spec.rb",
+  "test/rubyspec/library/socket/basicsocket/getsockname_spec.rb",
+  "test/rubyspec/library/socket/basicsocket/getsockopt_spec.rb",
+  "test/rubyspec/library/socket/basicsocket/recv_nonblock_spec.rb",
+  "test/rubyspec/library/socket/basicsocket/setsockopt_spec.rb",
+  "test/rubyspec/library/socket/basicsocket/shutdown_spec.rb"
 ]
 
 
