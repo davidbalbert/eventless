@@ -38,20 +38,82 @@ class BasicSocket < IO
 
   ################
   # Receiving data
-  alias_method :read_block, :read
-  def read(*args)
-    STDERR.puts "read"
+  BUFFER_LENGTH = 128*1024
+
+  alias_method :sysread_block, :sysread
+  def sysread(*args)
+    STDERR.puts "sysread"
+    buffer = ""
     begin
       flags = fcntl(Fcntl::F_GETFL, 0)
-      mseg = read_nonblock(*args)
+      buffer << read_nonblock(*args)
       fcntl(Fcntl::F_SETFL, flags)
     rescue IO::WaitReadable
       fcntl(Fcntl::F_SETFL, flags)
-      wait(Eventless.loop.io(:write, self))
+      wait(Eventless.loop.io(:read, self))
       retry
     end
 
-    mesg
+    buffer
+  end
+
+  def readpartial(length=nil, buffer=nil)
+    raise ArgumentError if !length.nil? && length < 0
+    STDERR.puts "readpartial"
+
+    buffer = "" if buffer.nil?
+    if byte_buffer.length >= length
+      buffer << byte_buffer.slice!(0, length)
+    elsif byte_buffer.length > 0
+      buffer << byte_buffer.slice!(0, byte_buffer.length)
+    else
+      buffer << sysread(length)
+    end
+
+    buffer
+  end
+
+
+  alias_method :read_block, :read
+  def read(length=nil, buffer=nil)
+    raise ArgumentError if !length.nil? && length < 0
+    STDERR.puts "read"
+
+    return "" if length == 0
+    buffer = "" if buffer.nil?
+
+    if length.nil?
+      loop do
+        begin
+          buffer << sysread(BUFFER_LENGTH)
+        rescue EOFError
+          break
+        end
+      end
+    else
+      if byte_buffer.length >= length
+        return byte_buffer.slice!(0, length)
+      elsif byte_buffer.length > 0
+        buffer << byte_buffer.slice!(0, byte_buffer.length)
+      end
+
+      remaining = length - buffer.length
+      while buffer.length < length && remaining > 0
+        begin
+          buffer << sysread(remaining > BUFFER_LENGTH ? remaining : BUFFER_LENGTH)
+          remaining = length - buffer.length
+        rescue EOFError
+          break
+        end
+      end
+    end
+
+    return nil if buffer.length == 0
+    if buffer.length > length
+      byte_buffer << buffer.slice!(length, buffer.length)
+    end
+
+    buffer
   end
 
 
@@ -96,6 +158,14 @@ class BasicSocket < IO
     ensure
       watcher.detach
     end
+  end
+
+  def byte_buffer
+    @buffer ||= ""
+  end
+
+  def byte_buffer=(buffer)
+    @buffer = buffer
   end
 end
 
