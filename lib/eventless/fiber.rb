@@ -71,11 +71,19 @@ class Fiber
     @exception.nil?
   end
 
-  def join
+  def join(timeout=nil)
     return if dead?
 
-    link(Fiber.current, :transfer)
-    Eventless.loop.transfer
+    timeout = Eventless::Timeout.new(timeout).start
+
+    begin
+      link(Fiber.current, :transfer)
+      Eventless.loop.transfer
+    rescue Eventless::Timeout => t
+      raise t unless t == timeout
+    end
+
+    nil
   end
 
   def link(obj, method)
