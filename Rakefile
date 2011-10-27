@@ -1,5 +1,11 @@
 require 'bundler/gem_tasks'
 
+SPECS = [
+  "test/rubyspec/library/socket/basicsocket/close_read_spec.rb",
+  "test/rubyspec/library/socket/basicsocket/close_write_spec.rb"
+]
+
+
 namespace :spec do
   desc "Ensure spec dependencies are installed"
   task :deps do
@@ -18,7 +24,10 @@ else
     # eventually, we should be able to run this... maybe :)
     # sh "test/mspec/bin/mspec -t #{ENV["TARGET"] || "ruby" } -Ilib -reventless test/rubyspec/library/socket/"
 
-    sh "test/mspec/bin/mspec -t #{ENV["TARGET"] || "ruby" } -Ilib -reventless test/rubyspec/library/socket/basicsocket/close_read_spec.rb"
+    sh "test/mspec/bin/mspec -t #{ENV["TARGET"] || "ruby" } -Ilib -reventless #{SPECS.join(" ")}"
+
+    # run without eventless
+    #sh "test/mspec/bin/mspec -t #{ENV["TARGET"] || "ruby" } #{SPECS.join(" ")}"
   end
 end
 
