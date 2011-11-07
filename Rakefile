@@ -8,7 +8,9 @@ SPECS = [
   "test/rubyspec/library/socket/basicsocket/getsockopt_spec.rb",
   "test/rubyspec/library/socket/basicsocket/recv_nonblock_spec.rb",
   "test/rubyspec/library/socket/basicsocket/setsockopt_spec.rb",
-  "test/rubyspec/library/socket/basicsocket/shutdown_spec.rb"
+  "test/rubyspec/library/socket/basicsocket/shutdown_spec.rb",
+
+  "test/rubyspec/library/mutex"
 ]
 
 

@@ -98,6 +98,7 @@ class Fiber
     @links.delete([obj, method])
   end
 
+  # Thread methods
   def [](key)
     fiber_vars[key]
   end
@@ -106,11 +107,28 @@ class Fiber
     fiber_vars[key] = val
   end
 
+  def status
+    if dead?
+      if success?
+        false
+      else
+        nil
+      end
+    else
+      if self == Fiber.current
+        "run"
+      else
+        "sleep"
+      end
+    end
+  end
+
+
+  private
   def fiber_vars
     @fiber_vars ||= {}
   end
 
-  private
   def dead
     @dead if defined? @dead
   end

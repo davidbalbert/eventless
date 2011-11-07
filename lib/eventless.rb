@@ -5,6 +5,7 @@ require 'eventless/socket'
 require 'eventless/select'
 require 'eventless/timeout'
 require 'eventless/event'
+require 'eventless/thread'
 
 module Kernel
   alias_method :sleep_block, :sleep
