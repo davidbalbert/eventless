@@ -3,6 +3,8 @@ require 'fiber'
 class Fiber
   attr_reader :result, :exception, :parent
 
+  attr_accessor :sleeping
+
   alias_method :initialize_original, :initialize
   def initialize(parent=Fiber.current, &block)
     @links = []
@@ -77,10 +79,14 @@ class Fiber
     timeout = Eventless::Timeout.new(timeout).start
 
     begin
-      link(Fiber.current, :transfer)
+      current = Fiber.current
+      current.sleeping = true
+      link(current, :transfer)
       Eventless.loop.transfer
     rescue Eventless::Timeout => t
       raise t unless t == timeout
+    ensure
+      current.sleeping = false
     end
 
     nil
@@ -96,6 +102,10 @@ class Fiber
 
   def unlink(obj, method)
     @links.delete([obj, method])
+  end
+
+  def sleeping?
+    sleeping
   end
 
   # Thread methods
@@ -115,14 +125,13 @@ class Fiber
         nil
       end
     else
-      if self == Fiber.current
-        "run"
-      else
+      if sleeping?
         "sleep"
+      else
+        "run"
       end
     end
   end
-
 
   private
   def fiber_vars

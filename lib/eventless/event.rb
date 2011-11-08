@@ -40,10 +40,13 @@ module Eventless
     def wait
       return true if set?
 
-      link(Fiber.current, :transfer)
+      current = Fiber.current
+      link(current, :transfer)
       begin
+        current.sleeping = true
         Eventless.loop.transfer
       ensure
+        current.sleeping = false
         unlink(Fiber.current, :transfer)
       end
 

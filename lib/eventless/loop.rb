@@ -42,7 +42,7 @@ module Eventless
       else raise ArgumentError, "no such mode: #{mode}"
       end
 
-      watcher
+      Watcher.new(watcher, fiber)
     end
 
     def timer(duration, &callback)
@@ -52,7 +52,7 @@ module Eventless
         callback.call
       end
 
-      watcher
+      Watcher.new(watcher, fiber)
     end
 
     def sleep(duration)
@@ -90,6 +90,29 @@ module Eventless
         @loop.run
         @fiber.parent.transfer_and_raise "This code would block forever!"
       end
+    end
+  end
+
+  class Watcher
+    attr_accessor :watcher, :fiber
+
+    def initialize(watcher, fiber)
+      @watcher = watcher
+      @fiber = fiber
+    end
+
+    def attach(event_loop)
+      @fiber.sleeping = true
+      @watcher.attach(event_loop)
+    end
+
+    def detach
+      @watcher.detach
+      @fiber.sleeping = false
+    end
+
+    def method_missing(name, *args, &block)
+      @watcher.send(name, *args, &block)
     end
   end
 end
