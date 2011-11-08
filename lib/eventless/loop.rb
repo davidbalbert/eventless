@@ -58,7 +58,13 @@ module Eventless
     def sleep(duration)
       fiber = Fiber.current
       watcher = timer(duration) { fiber.transfer }
-      wait(watcher)
+
+      watcher.attach(@loop)
+      begin
+        transfer
+      ensure
+        watcher.detach if watcher.attached?
+      end
 
       # if we return, then we've slept the full amount of time, so just return
       # what we said we were going to sleep. The only way for us to stop
@@ -72,15 +78,6 @@ module Eventless
       # non-repeating timeout of 0
       watcher = timer(0) { fiber.transfer }
       watcher.attach(@loop)
-    end
-
-    def wait(watcher)
-      watcher.attach(@loop)
-      begin
-        transfer
-      ensure
-        watcher.detach if watcher.attached?
-      end
     end
 
     def attach(watcher)
