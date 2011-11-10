@@ -2,6 +2,7 @@
 
 require 'bundler/setup'
 require 'eventless'
+require 'eventless/thread'
 
 m = Mutex.new
 
