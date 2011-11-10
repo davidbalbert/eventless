@@ -5,7 +5,8 @@ class Thread
     # doing this won't work for subclasses of Thread (I think).
     def new(*args, &block)
       f = Fiber.new(*args, &block)
-      Eventless.loop.schedule(f)
+      f.is_thread = true
+      Eventless.loop.schedule(f, *args)
 
       f
     end
@@ -45,9 +46,7 @@ module Eventless
           raise ThreadError, "deadlock; recursive locking"
         end
 
-        f = Fiber.current
-        f.sleeping = true
-        @waiters << f
+        @waiters << Fiber.current
         Eventless.loop.transfer
       end
 
@@ -60,7 +59,6 @@ module Eventless
       end
 
       @owner = @waiters.shift
-      @owner.sleeping = false unless @owner.nil?
       Eventless.loop.schedule(@owner) if @owner
 
       self

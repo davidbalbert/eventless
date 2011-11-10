@@ -1,22 +1,25 @@
 require 'fiber'
 
 class Fiber
-  attr_reader :result, :exception, :parent
-
-  attr_accessor :sleeping
+  attr_accessor :parent, :is_thread
+  attr_reader :result, :exception
 
   alias_method :initialize_original, :initialize
   def initialize(parent=Fiber.current, &block)
     @links = []
     @dead = false
     @parent = parent
+    @is_thread = false
+    @started = false
 
-    initialize_original do
+    initialize_original do |*args|
       begin
+        @started = true
+
         # in case someone started us with transfer_and_raise
         raise_after_transfer!
 
-        @result = block.call
+        @result = block.call(*args)
       rescue StandardError => e
         @dead = true
         @exception = e
@@ -79,14 +82,10 @@ class Fiber
     timeout = Eventless::Timeout.new(timeout).start
 
     begin
-      current = Fiber.current
-      current.sleeping = true
-      link(current, :transfer)
+      link(Fiber.current, :transfer)
       Eventless.loop.transfer
     rescue Eventless::Timeout => t
       raise t unless t == timeout
-    ensure
-      current.sleeping = false
     end
 
     nil
@@ -102,10 +101,6 @@ class Fiber
 
   def unlink(obj, method)
     @links.delete([obj, method])
-  end
-
-  def sleeping?
-    sleeping
   end
 
   # Thread methods
@@ -125,13 +120,14 @@ class Fiber
         nil
       end
     else
-      if sleeping?
-        "sleep"
-      else
+      if self == Fiber.current or is_new_thread?
         "run"
+      else
+        "sleep"
       end
     end
   end
+
 
   private
   def fiber_vars
@@ -140,5 +136,9 @@ class Fiber
 
   def dead
     @dead if defined? @dead
+  end
+
+  def is_new_thread?
+    @is_thread and not @started
   end
 end
