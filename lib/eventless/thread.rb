@@ -1,5 +1,11 @@
 require 'thread'
 
+module Eventless
+  def self.thread_patched?
+    true
+  end
+end
+
 class Thread
   class << self
     # doing this won't work for subclasses of Thread (I think).
@@ -16,6 +22,11 @@ class Thread
 
     def pass
       Eventless.sleep(0)
+    end
+
+    alias_method :_thread_current, :current
+    def current
+      Fiber.current
     end
   end
 end

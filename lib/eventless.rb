@@ -25,4 +25,8 @@ module Eventless
   def self.loop
     Loop.default
   end
+
+  def self.thread_patched?
+    false
+  end
 end

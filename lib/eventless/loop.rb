@@ -1,5 +1,7 @@
 require 'eventless/core_ext/silence_warnings'
 
+require 'thread'
+
 silence_warnings do
   require 'cool.io'
 end
@@ -15,7 +17,11 @@ module Eventless
     attr_reader :running, :fiber
 
     def self.default
-      Thread.current._eventless_loop
+      unless Eventless.thread_patched?
+        Thread.current._eventless_loop
+      else
+        Thread._thread_current._eventless_loop
+      end
     end
 
     def initialize
