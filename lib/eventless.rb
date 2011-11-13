@@ -15,8 +15,8 @@ module Kernel
 end
 
 module Eventless
-  def self.spawn(&callback)
-    f = Fiber.new(Eventless.loop.fiber, &callback)
+  def self.spawn(&block)
+    f = Fiber.new(Eventless.loop.fiber, &block)
     Eventless.loop.schedule(f)
 
     f
