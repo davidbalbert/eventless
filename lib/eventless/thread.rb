@@ -10,7 +10,7 @@ class Thread
   class << self
     # doing this won't work for subclasses of Thread (I think).
     def new(*args, &block)
-      f = Fiber.new(&block)
+      f = Fiber.new(Eventless.loop.fiber, &block)
       f.is_thread = true
       Eventless.loop.schedule(f, *args)
 
