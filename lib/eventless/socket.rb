@@ -266,6 +266,11 @@ class TCPServer
 
       sock.listen(5)
 
+      sock.class.send(:alias_method, :accept_pair, :accept)
+      def sock.accept
+        accept_pair[0]
+      end
+
       sock
     end
   end
