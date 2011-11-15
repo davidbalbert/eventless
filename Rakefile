@@ -39,4 +39,15 @@ else
   end
 end
 
+desc "load eventless in a pry or irb session"
+task :console do
+  if system("which pry")
+    repl = "pry"
+  else
+    repl = "irb"
+  end
+
+  sh "#{repl} -Ilib -rubygems -reventless"
+end
+
 task :default => :spec
