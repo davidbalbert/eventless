@@ -39,7 +39,7 @@ else
   end
 end
 
-desc "load eventless in a pry or irb session"
+desc "load eventless in a pry or irb session (alias `rake c`)"
 task :console do
   if system("which pry")
     repl = "pry"
@@ -49,5 +49,7 @@ task :console do
 
   sh "#{repl} -Ilib -rubygems -reventless"
 end
+
+task :c => :console
 
 task :default => :spec
