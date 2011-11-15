@@ -280,5 +280,7 @@ class TCPServer
     def new(hostname=nil, port)
       Eventless::TCPServer.new(hostname, port)
     end
+
+    alias_method :open, :new
   end
 end
