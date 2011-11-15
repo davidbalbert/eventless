@@ -247,31 +247,35 @@ class TCPSocket
   end
 end
 
-class TCPServer
-
-  class << self
-    def new(hostname=nil, port)
-      sock = nil
+module Eventless
+  class TCPServer < Socket
+    def initialize(hostname=nil, port)
       Addrinfo.foreach(hostname, port, :INET, :STREAM, nil, Socket::AI_PASSIVE) do |ai|
         begin
-          sock = Socket.new(ai.afamily, ai.socktype, ai.protocol)
-          sock.setsockopt(:SOCKET, :REUSEADDR, true)
-          sock.bind(ai)
+          super(ai.afamily, ai.socktype, ai.protocol)
+          setsockopt(:SOCKET, :REUSEADDR, true)
+          bind(ai)
         rescue
-          sock.close
+          close
         else
           break
         end
       end
 
-      sock.listen(5)
+      listen(5)
+    end
 
-      sock.class.send(:alias_method, :accept_pair, :accept)
-      def sock.accept
-        accept_pair[0]
-      end
+    def accept
+      super[0]
+    end
 
-      sock
+  end
+end
+
+class TCPServer
+  class << self
+    def new(hostname=nil, port)
+      Eventless::TCPServer.new(hostname, port)
     end
   end
 end
