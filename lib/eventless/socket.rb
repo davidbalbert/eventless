@@ -270,9 +270,8 @@ module Eventless
     end
 
     def accept
-      super[0]
+      TCPSocket.for_fd(super[0].fileno)
     end
-
   end
 end
 
