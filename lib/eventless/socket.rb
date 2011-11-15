@@ -248,7 +248,7 @@ class TCPSocket
 end
 
 module Eventless
-  class TCPServer < Socket
+  class TCPServer < ::Socket
     def initialize(hostname=nil, port)
       Addrinfo.foreach(hostname, port, :INET, :STREAM, nil, Socket::AI_PASSIVE) do |ai|
         begin
