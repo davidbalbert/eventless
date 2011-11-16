@@ -227,27 +227,26 @@ end
 # false, which isn't pretty to say the least.
 class TCPSocket
   class << self
-    alias_method :open_block, :open
-
-    def open(remote_host, remote_port, local_host=nil, local_port=nil)
-      sock = Socket.new(:INET, :STREAM)
-      sock.connect(Socket.pack_sockaddr_in(remote_port, remote_host))
-
-      if local_host && local_port
-        sock.bind(Sock.pack_sockaddr_in(local_port, local_host))
-      end
-
-      sock
-    end
-
-    alias_method :new_block, :new
     def new(*args)
-      open(*args)
+      Eventless::TCPSocket.new(*args)
     end
+
+    alias_method :open, :new
   end
 end
 
 module Eventless
+  class TCPSocket < ::Socket
+    def initialize(remote_host, remote_port, local_host=nil, local_port=nil)
+      super(:INET, :STREAM)
+      connect(Socket.pack_sockaddr_in(remote_port, remote_host))
+
+      if local_host && local_port
+        bind(Sock.pack_sockaddr_in(local_port, local_host))
+      end
+    end
+  end
+
   class TCPServer < ::Socket
     def initialize(hostname=nil, port)
       Addrinfo.foreach(hostname, port, :INET, :STREAM, nil, Socket::AI_PASSIVE) do |ai|
@@ -277,8 +276,8 @@ end
 
 class TCPServer
   class << self
-    def new(hostname=nil, port)
-      Eventless::TCPServer.new(hostname, port)
+    def new(*args)
+      Eventless::TCPServer.new(*args)
     end
 
     alias_method :open, :new
