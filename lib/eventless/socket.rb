@@ -221,20 +221,6 @@ class Socket < BasicSocket
   end
 end
 
-
-# TODO: this is currently returning a Socket. At some point it needs to return
-# a TCPSocket for completeness. `TCPSocket.new.is_a? TCPSocket` will return
-# false, which isn't pretty to say the least.
-class TCPSocket
-  class << self
-    def new(*args)
-      Eventless::TCPSocket.new(*args)
-    end
-
-    alias_method :open, :new
-  end
-end
-
 module Eventless
   class TCPSocket < ::Socket
     def initialize(remote_host, remote_port, local_host=nil, local_port=nil)
@@ -271,6 +257,16 @@ module Eventless
     def accept
       TCPSocket.for_fd(super[0].fileno)
     end
+  end
+end
+
+class TCPSocket
+  class << self
+    def new(*args)
+      Eventless::TCPSocket.new(*args)
+    end
+
+    alias_method :open, :new
   end
 end
 
