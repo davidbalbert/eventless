@@ -222,6 +222,11 @@ class Socket < BasicSocket
 end
 
 module Eventless
+  AF_MAP = {}
+  ::Socket.constants.grep(/^AF_/).each do |c|
+    AF_MAP[Socket.const_get(c)] = c.to_s
+  end
+
   class TCPSocket < ::Socket
     def initialize(remote_host, remote_port, local_host=nil, local_port=nil)
       super(:INET, :STREAM)
@@ -229,6 +234,33 @@ module Eventless
 
       if local_host && local_port
         bind(Sock.pack_sockaddr_in(local_port, local_host))
+      end
+    end
+
+    def peeraddr(reverse_lookup=nil)
+      reverse_lookup = should_reverse_lookup?(reverse_lookup)
+      addr = remote_address
+
+      name_info = reverse_lookup ? addr.getnameinfo[0] : addr.ip_address
+
+      [AF_MAP[addr.afamily], addr.ip_port, name_info, addr.ip_address]
+    end
+
+    private
+    def should_reverse_lookup?(reverse_lookup)
+      case reverse_lookup
+      when true, :hostname
+        true
+      when false, :numeric
+        false
+      when nil
+        not do_not_reverse_lookup
+      else
+        if reverse_lookup.kind_of? Symbol
+          raise TypeError, "wrong argument type #{reverse_lookup.class} (expected Symbol)"
+        end
+
+        raise ArgumentError, "invalid reverse_lookup flag: #{reverse_lookup}"
       end
     end
   end
