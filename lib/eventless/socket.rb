@@ -267,7 +267,7 @@ module Eventless
 
   class TCPServer < ::Socket
     def initialize(hostname=nil, port)
-      Addrinfo.foreach(hostname, port, :INET, :STREAM, nil, Socket::AI_PASSIVE) do |ai|
+      Addrinfo.foreach(hostname, port, nil, :STREAM, nil, Socket::AI_PASSIVE) do |ai|
         begin
           # I know calling super multiple times looks problematic, but after
           # reading through rsock_init_sock() in ext/socket/init.c, it looks
