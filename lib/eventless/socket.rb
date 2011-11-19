@@ -4,9 +4,9 @@ require 'fcntl'
 class BasicSocket < IO
   ##############
   # Sending data
-  alias_method :write_block, :write
-  def write(*args)
-    STDERR.puts "write"
+  alias_method :syswrite_block, :syswrite
+  def syswrite(*args)
+    STDERR.puts "syswrite"
     begin
       flags = fcntl(Fcntl::F_GETFL, 0)
       result = write_nonblock(*args)
@@ -18,6 +18,19 @@ class BasicSocket < IO
     end
 
     result
+  end
+
+  alias_method :write_block, :write
+  def write(str)
+    STDERR.puts "syswrite"
+    written = 0
+
+    loop do
+      written += syswrite(str[written, str.length])
+      break if written == str.length
+    end
+
+    str.length
   end
 
   alias_method :sendmsg_block, :sendmsg
