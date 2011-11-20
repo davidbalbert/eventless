@@ -141,7 +141,6 @@ class BasicSocket < IO
     read(1)
   end
 
-  # XXX: incomplete, missing `limit` parameter, but I'm lazy
   alias_method :gets_block, :gets
   def gets(sep=$/, limit=nil)
     STDERR.puts "gets"
@@ -160,6 +159,7 @@ class BasicSocket < IO
         c = read(1)
         break if c.nil?
         str << c
+        break if not limit.nil? and str.length == limit
       end
     end
 
