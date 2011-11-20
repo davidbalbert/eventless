@@ -22,7 +22,7 @@ class BasicSocket < IO
 
   alias_method :write_block, :write
   def write(str)
-    STDERR.puts "syswrite"
+    STDERR.puts "write"
     written = 0
 
     loop do
@@ -90,7 +90,7 @@ class BasicSocket < IO
   alias_method :read_block, :read
   def read(length=nil, buffer=nil)
     raise ArgumentError if !length.nil? && length < 0
-    STDERR.puts "read"
+    STDERR.puts "read" unless length == 1
 
     return "" if length == 0
     buffer = "" if buffer.nil?
@@ -129,6 +129,43 @@ class BasicSocket < IO
     buffer
   end
 
+  alias_method :readchar_block, :readchar
+  def readchar
+    c = read(1)
+    raise EOFError if c.nil?
+    c
+  end
+
+  alias_method :getc_block, :getc
+  def getc
+    read(1)
+  end
+
+  # XXX: incomplete, missing `limit` parameter, but I'm lazy
+  alias_method :gets_block, :gets
+  def gets(sep=$/, limit=nil)
+    STDERR.puts "gets"
+
+    if sep.kind_of? Numeric and limit.nil?
+      limit = sep
+      sep = $/
+    end
+
+    sep = "\n\n" if sep == ""
+    str = ""
+    if sep.nil?
+      str = read
+    else
+      while str.index(sep).nil?
+        c = read(1)
+        break if c.nil?
+        str << c
+      end
+    end
+
+    $_ = str
+    str
+  end
 
   alias_method :recv_block, :recv
   def recv(*args)

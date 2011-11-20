@@ -44,6 +44,10 @@ module Eventless
       @started = false
       @watcher.detach if @watcher.attached?
     end
+
+    def inspect
+      "#<Eventless::Timeout: #{@seconds}>"
+    end
   end
 end
 
