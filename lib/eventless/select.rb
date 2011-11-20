@@ -28,12 +28,6 @@ module Eventless
     #STDERR.puts "about to select", read_array.inspect, write_array.inspect
     STDERR.puts "select"
 
-    require 'eventless/core_ext/backtrace'
-    puts "==="
-    p read_array, write_array, error_array, timeout
-    puts backtrace
-    puts "==="
-
     begin
       read_array.each do |io|
         watcher = Eventless.loop.io(:read, io) do
