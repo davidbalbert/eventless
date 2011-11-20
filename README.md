@@ -77,12 +77,13 @@ Remember, right now Eventless only works on Ruby 1.9.
 - `IO.select`
 - `Socket#recv`, `Socket#connect`, `Socket#write`, and `TCPSocket.new`
 - `IO#read*` and `IO#sysread` (for sockets only)
+- `IO#get*` (but I haven't really tested them)
+- `IO#write*`
 - `timeout.rb`
 - `open-uri`
 
 ###What doesn't work
 - All the other `Socket` code.
-- `IO#write*`
 - DNS resolution
 - Everything else
 
