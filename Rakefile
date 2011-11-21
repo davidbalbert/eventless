@@ -1,16 +1,8 @@
 require 'bundler/gem_tasks'
 
 SPECS = [
-  "test/rubyspec/library/socket/basicsocket/close_read_spec.rb",
-  "test/rubyspec/library/socket/basicsocket/close_write_spec.rb",
-  "test/rubyspec/library/socket/basicsocket/for_fd_spec.rb",
-  "test/rubyspec/library/socket/basicsocket/getsockname_spec.rb",
-  "test/rubyspec/library/socket/basicsocket/getsockopt_spec.rb",
-  "test/rubyspec/library/socket/basicsocket/recv_nonblock_spec.rb",
-  "test/rubyspec/library/socket/basicsocket/setsockopt_spec.rb",
-  "test/rubyspec/library/socket/basicsocket/shutdown_spec.rb",
-
-  "test/rubyspec/library/mutex"
+  "test/rubyspec/library/socket/basicsocket",
+  "test/rubyspec/library/mutex",
 ]
 
 
@@ -30,9 +22,9 @@ else
   desc "Run specs"
   task :spec do
     # eventually, we should be able to run this... maybe :)
-    # sh "test/mspec/bin/mspec -t #{ENV["TARGET"] || "ruby" } -Ilib -reventless test/rubyspec/library/socket/"
+    # sh "test/mspec/bin/mspec -t #{ENV["TARGET"] || "ruby" } -Ilib -reventless -reventless/thread test/rubyspec/library/socket/"
 
-    sh "test/mspec/bin/mspec -t #{ENV["TARGET"] || "ruby" } -Ilib -reventless #{SPECS.join(" ")}"
+    sh "test/mspec/bin/mspec -t #{ENV["TARGET"] || "ruby" } -Ilib -reventless -reventless/thread #{SPECS.join(" ")}"
 
     # run without eventless
     #sh "test/mspec/bin/mspec -t #{ENV["TARGET"] || "ruby" } #{SPECS.join(" ")}"
