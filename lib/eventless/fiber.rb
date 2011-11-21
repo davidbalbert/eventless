@@ -21,12 +21,22 @@ class Fiber
 
         @result = block.call(*args)
       rescue StandardError => e
+        raise e if @is_thread
         @dead = true
         @exception = e
         print_exception
       rescue FiberExit => e
         @dead = true
         @exception = e
+      end
+
+      # Mutex#unlock removes self from @owner[:mutexes], so we must
+      # clone self[:mutexes] before iterating.
+      if self[:mutexes]
+        mutexes_clone = self[:mutexes].clone
+        mutexes_clone.each do |m|
+          m.unlock
+        end
       end
 
       @watcher = Eventless.loop.timer(0) do
@@ -51,21 +61,29 @@ class Fiber
     raise_after_transfer!
   end
 
-  def transfer_and_raise(exception)
-    raise_later(exception)
+  def transfer_and_raise(exception, msg=nil)
+    raise_later(exception, msg)
     transfer
   end
 
-  def raise_later(exception)
+  def raise_later(exception, msg=nil)
+    exception = [exception, msg] unless msg.nil?
     self[:to_raise] = exception
   end
 
   def raise_after_transfer!
     if Fiber.current[:to_raise]
       ex = Fiber.current[:to_raise]
-      ex = ex.call if ex.respond_to? :call # for testing
+      msg = nil
+      if ex.kind_of? Array
+        ex, msg = ex
+      end
+
+      # for testing: allow a proc that returns an exception
+      ex = ex.call if ex.respond_to? :call
+
       Fiber.current[:to_raise] = nil
-      raise ex
+      raise ex, msg
     end
   end
 
@@ -84,7 +102,6 @@ class Fiber
   end
 
   def join(timeout=nil)
-    raise ThreadError if dead? and @is_thread
     return if dead?
 
     timeout = Eventless::Timeout.new(timeout).start
@@ -94,9 +111,10 @@ class Fiber
       Eventless.loop.transfer
     rescue Eventless::Timeout => t
       raise t unless t == timeout
+      return nil
     end
 
-    nil
+    self
   end
 
   def link(obj, method)

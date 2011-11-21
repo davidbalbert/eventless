@@ -11,7 +11,7 @@ end
 
 class Thread
   class << self
-    # doing this won't work for subclasses of Thread (I think).
+    # XXX: doing this won't work for subclasses of Thread (I think)
     undef new
     def new(*args, &block)
       f = Fiber.new(Eventless.loop.fiber, &block)
@@ -20,7 +20,6 @@ class Thread
 
       f
     end
-
 
     undef start
     undef fork
@@ -55,6 +54,8 @@ module Eventless
         false
       else
         @owner = Fiber.current
+        @owner[:mutexes] ||= []
+        @owner[:mutexes] << self
         true
       end
     end
@@ -76,6 +77,8 @@ module Eventless
       if @owner != Fiber.current
         raise ThreadError, "Not owner of the lock, #{@owner.inspect} is. Can't release"
       end
+
+      @owner[:mutexes].delete(self)
 
       @owner = @waiters.shift
       Eventless.loop.schedule(@owner) if @owner
