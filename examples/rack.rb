@@ -2,6 +2,8 @@
 
 
 $:.unshift File.join(File.dirname(__FILE__), "..", "lib")
+#$:.unshift File.join(File.dirname(__FILE__), "..", "..", 'ruby', 'lib')
+#$:.unshift File.join(File.dirname(__FILE__), "..", "..", 'ruby', 'ext', 'socket', 'lib')
 
 require 'rack'
 require 'eventless'
