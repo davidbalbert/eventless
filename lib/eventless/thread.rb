@@ -91,4 +91,5 @@ module Eventless
   end
 end
 
+Object.send(:remove_const, :Mutex)
 Mutex = Eventless::Mutex
