@@ -1,14 +1,18 @@
 require 'thread'
 
 module Eventless
-  def self.thread_patched?
-    true
+  class << self
+    undef thread_patched?
+    def thread_patched?
+      true
+    end
   end
 end
 
 class Thread
   class << self
     # doing this won't work for subclasses of Thread (I think).
+    undef new
     def new(*args, &block)
       f = Fiber.new(Eventless.loop.fiber, &block)
       f.is_thread = true
@@ -17,9 +21,13 @@ class Thread
       f
     end
 
+
+    undef start
+    undef fork
     alias_method :start, :new
     alias_method :fork, :new
 
+    alias_method :_thread_pass, :pass
     def pass
       Eventless.sleep(0)
     end
