@@ -24,6 +24,9 @@ class Fiber
         @dead = true
         @exception = e
         print_exception
+      rescue FiberExit => e
+        @dead = true
+        @exception = e
       end
 
       @watcher = Eventless.loop.timer(0) do
@@ -49,8 +52,12 @@ class Fiber
   end
 
   def transfer_and_raise(exception)
-    self[:to_raise] = exception
+    raise_later(exception)
     transfer
+  end
+
+  def raise_later(exception)
+    self[:to_raise] = exception
   end
 
   def raise_after_transfer!
@@ -77,6 +84,7 @@ class Fiber
   end
 
   def join(timeout=nil)
+    raise ThreadError if dead? and @is_thread
     return if dead?
 
     timeout = Eventless::Timeout.new(timeout).start
@@ -128,6 +136,15 @@ class Fiber
     end
   end
 
+  def exit
+    if self == Fiber.current
+      raise FiberExit
+    else
+      raise_later FiberExit
+    end
+  end
+  alias_method :kill, :exit
+  alias_method :terminate, :exit
 
   private
   def fiber_vars
@@ -142,3 +159,5 @@ class Fiber
     @is_thread and not @started
   end
 end
+
+class FiberExit < Exception; end
