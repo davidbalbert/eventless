@@ -40,7 +40,7 @@ task :console do
     repl = "irb"
   end
 
-  sh "#{repl} -Ilib -rubygems -reventless"
+  sh "#{repl} -rubygems -r'bundler/setup' -reventless"
 end
 
 task :c => :console

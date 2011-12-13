@@ -19,4 +19,5 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   s.add_dependency("cool.io")
+  s.add_dependency("ruby-cares")
 end

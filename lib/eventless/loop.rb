@@ -1,4 +1,5 @@
 require 'eventless/core_ext/silence_warnings'
+require 'eventless/resolver'
 
 require 'thread'
 
@@ -14,7 +15,7 @@ end
 
 module Eventless
   class Loop
-    attr_reader :running, :fiber
+    attr_reader :running, :fiber, :resolver
 
     def self.default
       unless Eventless.thread_patched?
@@ -27,6 +28,8 @@ module Eventless
     def initialize
       @loop = Coolio::Loop.new
       @fiber = Fiber.new(Fiber.current) { run }
+
+      setup_resolver
     end
 
     def transfer(*args)
@@ -51,8 +54,8 @@ module Eventless
       watcher
     end
 
-    def timer(duration, &callback)
-      watcher = Coolio::TimerWatcher.new(duration)
+    def timer(duration, repeating=false, &callback)
+      watcher = Coolio::TimerWatcher.new(duration, repeating)
       watcher.on_timer do
         watcher.detach
         callback.call
@@ -88,6 +91,10 @@ module Eventless
 
     def attach(watcher)
       watcher.attach(@loop)
+    end
+
+    def detach(watcher)
+      watcher.detach
     end
 
     private
