@@ -23,6 +23,8 @@ class BasicSocket < IO
   alias_method :write_block, :write
   def write(str)
     STDERR.puts "write"
+
+    str = str.to_s
     written = 0
 
     loop do
@@ -47,6 +49,17 @@ class BasicSocket < IO
     end
 
     result
+  end
+
+  def print(*objs)
+    objs[0] = $_ if objs.size == 0
+
+    objs.each_with_index do |obj, i|
+      write($,) if $, and i > 0
+      write(obj)
+    end
+
+    write($\) if $\ and objs.size > 0
   end
 
   ################
