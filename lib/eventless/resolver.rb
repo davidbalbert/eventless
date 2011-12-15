@@ -1,6 +1,7 @@
 require 'socket'
 
 require 'cares'
+require 'ipaddress'
 
 module Eventless
   class Loop
@@ -54,14 +55,27 @@ module Eventless
 
     ########################################################################
     private
+
+    # TODO: these SocketErrors are thrown in the context of the eventloop,
+    # which means that one dns error will probably kill the entire system! This
+    # is very bad! I'm not sure the best way to handle this one. I think I may
+    # have to add error callbacks to ruby-cares
     def create_socket_watchers(socket)
       handler = SocketHandler.new
       resolver = @resolver
       handler.read_watcher = io(:read, socket) do
-        resolver.process_fd(socket, Cares::ARES_SOCKET_BAD)
+        begin
+          resolver.process_fd(socket, Cares::ARES_SOCKET_BAD)
+        rescue Cares::CaresError => e
+          raise SocketError, e.message
+        end
       end
       handler.write_watcher = io(:write, socket) do
-        resolver.process_fd(Cares::ARES_SOCKET_BAD, socket)
+        begin
+          resolver.process_fd(Cares::ARES_SOCKET_BAD, socket)
+        rescue Cares::CaresError => e
+          raise SocketError, e.message
+        end
       end
 
       handler
@@ -73,6 +87,15 @@ class << IPSocket
   alias_method :old_getaddress, :getaddress
 
   def getaddress(hostname)
+    STDERR.puts "IPSocket.getaddress"
+
+    # return if we're already a valid ip address
+    begin
+      IPAddress.parse hostname
+      return hostname
+    rescue
+    end
+
     fiber = Fiber.current
     addr = nil
     Eventless.resolver.gethostbyname(hostname, Socket::AF_UNSPEC) do |name, aliases, faimly, *addrs|

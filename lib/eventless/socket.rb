@@ -135,7 +135,7 @@ class BasicSocket < IO
     end
 
     return nil if buffer.length == 0
-    if buffer.length > length
+    if length and buffer.length > length
       byte_buffer << buffer.slice!(length, buffer.length)
     end
 
@@ -293,9 +293,15 @@ module Eventless
   class TCPSocket < ::Socket
     def initialize(remote_host, remote_port, local_host=nil, local_port=nil)
       super(:INET, :STREAM)
+
+      # TODO: Socket.pack_sockaddr_in actually calls getaddrinfo. We're
+      # ensuring that remote_host is an ip address at this point, but it would
+      # be better to have pack_sockaddr_in resolve the hostname asynchronously
+      remote_host = ::IPSocket.getaddress(remote_host)
       connect(Socket.pack_sockaddr_in(remote_port, remote_host))
 
       if local_host && local_port
+        local_host = IPSocket.getaddress(local_host)
         bind(Sock.pack_sockaddr_in(local_port, local_host))
       end
     end

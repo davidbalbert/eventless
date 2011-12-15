@@ -20,4 +20,5 @@ Gem::Specification.new do |s|
 
   s.add_dependency("cool.io")
   s.add_dependency("ruby-cares")
+  s.add_dependency("ipaddress")
 end
