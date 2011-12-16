@@ -98,6 +98,11 @@ class << IPSocket
     addr = nil
     Eventless.resolver.gethostbyname(hostname, Socket::AF_UNSPEC) do |name, aliases, faimly, *addrs|
       addr = addrs[0]
+
+      # XXX: I thought calling fiber.transfer(addrs[0]) would make
+      # Eventless.loop.transfer return addrs[0], but it doesn't. I'm not sure
+      # why. If anyone knows how to fix it, let me know. I think closing around
+      # addr is a bit hacky.
       fiber.transfer
     end
     Eventless.loop.transfer
