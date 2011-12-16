@@ -1,6 +1,8 @@
 require 'socket'
 require 'fcntl'
 
+require 'eventless/sockaddr'
+
 class BasicSocket < IO
   ##############
   # Sending data
@@ -233,6 +235,22 @@ class BasicSocket < IO
 end
 
 class Socket < BasicSocket
+
+  class << self
+    alias_method :sockaddr_in_block, :sockaddr_in
+    alias_method :pack_sockaddr_in_block, :pack_sockaddr_in
+
+    def pack_sockaddr_in(port, host)
+      STDERR.puts "Sockaddr.pack_sockaddr_in"
+
+      ip = IPAddress.parse(IPSocket.getaddress(host))
+      family = ip.ipv6? ? Socket::AF_INET6 : Socket::AF_INET
+
+      Eventless::Sockaddr.pack_sockaddr_in(port, ip.to_s, family)
+    end
+    alias_method :sockaddr_in, :pack_sockaddr_in
+  end
+
   alias_method :connect_block, :connect
   def connect(*args)
     STDERR.puts "connect"
@@ -282,6 +300,7 @@ class Socket < BasicSocket
 
     pair
   end
+
 end
 
 module Eventless
@@ -293,16 +312,10 @@ module Eventless
   class TCPSocket < ::Socket
     def initialize(remote_host, remote_port, local_host=nil, local_port=nil)
       super(:INET, :STREAM)
-
-      # TODO: Socket.pack_sockaddr_in actually calls getaddrinfo. We're
-      # ensuring that remote_host is an ip address at this point, but it would
-      # be better to have pack_sockaddr_in resolve the hostname asynchronously
-      remote_host = ::IPSocket.getaddress(remote_host)
       connect(Socket.pack_sockaddr_in(remote_port, remote_host))
 
       if local_host && local_port
-        local_host = IPSocket.getaddress(local_host)
-        bind(Sock.pack_sockaddr_in(local_port, local_host))
+        bind(Socket.pack_sockaddr_in(local_port, local_host))
       end
     end
 

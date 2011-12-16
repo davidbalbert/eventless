@@ -1,4 +1,10 @@
 require 'bundler/gem_tasks'
+require 'rake/extensiontask'
+
+Rake::ExtensionTask.new('sockaddr') do |ext|
+  ext.lib_dir = "lib/eventless"
+  ext.ext_dir = "ext/sockaddr"
+end
 
 SPECS = [
   "test/rubyspec/library/socket/basicsocket",

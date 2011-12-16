@@ -17,8 +17,11 @@ Gem::Specification.new do |s|
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
   s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
+  s.extensions = ["ext/sockaddr/extconf.rb"]
 
   s.add_dependency("cool.io")
   s.add_dependency("ruby-cares")
   s.add_dependency("ipaddress")
+
+  s.add_development_dependency("rake-compiler")
 end
