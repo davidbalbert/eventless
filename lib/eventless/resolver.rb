@@ -11,16 +11,16 @@ module Eventless
       @resolver_sockets = {}
 
       resolver = Cares.new do |socket, read, write|
+        handler = @resolver_sockets[socket.fileno]
+
         if read or write
-          unless @resolver_sockets.has_key?(socket)
+          if handler.nil?
             # new socket
             attach(@resolver_timer) unless @resolver_timer.attached?
 
             handler = create_socket_watchers(socket)
-            @resolver_sockets[socket] = handler
+            @resolver_sockets[socket.fileno] = handler
           end
-
-          handler = @resolver_sockets[socket]
 
           if read
             attach(handler.read_watcher)
@@ -35,10 +35,10 @@ module Eventless
           end
 
         else # socket just got closed
-          detach(handler.read_handler) if handler.read_handler.attached?
-          detach(handler.write_handler) if handler.write_handler.attached?
+          detach(handler.read_watcher) if handler.read_watcher.attached?
+          detach(handler.write_watcher) if handler.write_watcher.attached?
 
-          @resolver_sockets.delete(socket)
+          @resolver_sockets.delete(socket.fileno)
 
           if @resolver_sockets.size == 0
             detach(@resolver_timer)
@@ -87,8 +87,6 @@ class << IPSocket
   alias_method :old_getaddress, :getaddress
 
   def getaddress(hostname)
-    STDERR.puts "IPSocket.getaddress"
-
     # return if we're already a valid ip address
     begin
       IPAddress.parse hostname

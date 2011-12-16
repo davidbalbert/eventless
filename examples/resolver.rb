@@ -4,8 +4,11 @@ require 'bundler/setup'
 
 require 'eventless'
 
-puts IPSocket.getaddress("www.google.com")
+fibers = []
+%w(www.google.com ipv6.google.com www.yahoo.com www.bing.com).each do |host|
+  fibers << Eventless.spawn do
+    puts "#{host}: #{IPSocket.getaddress(host)}"
+  end
+end
 
-p Socket.unpack_sockaddr_in(Socket.pack_sockaddr_in(80, "www.google.com"))
-
-p Socket.pack_sockaddr_in(80, "www.google.com")
+fibers.each { |f| f.join }

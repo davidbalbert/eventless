@@ -21,8 +21,7 @@ rb_eventless_pack_sockaddr_in(VALUE self, VALUE port, VALUE host, VALUE sa_famil
                 a.sin_port = htons(NUM2INT(port));
                 inet_pton(AF_INET, RSTRING_PTR(host), &a.sin_addr);
                 packed_str = rb_str_new((char *)&a, sizeof(struct sockaddr_in));
-        }
-        else if (NUM2INT(sa_family) == AF_INET6) {
+        } else if (NUM2INT(sa_family) == AF_INET6) {
                 struct sockaddr_in6 a;
                 memset(&a, 0, sizeof(a));
 
