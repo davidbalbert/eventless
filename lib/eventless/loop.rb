@@ -57,7 +57,7 @@ module Eventless
     def timer(duration, repeating=false, &callback)
       watcher = Coolio::TimerWatcher.new(duration, repeating)
       watcher.on_timer do
-        watcher.detach
+        watcher.detach unless repeating
         callback.call
       end
 
