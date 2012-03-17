@@ -5,8 +5,12 @@ require 'eventless'
 
 require 'open-uri'
 
-Eventless.spawn do
-  open("http://www.google.com/") do |f|
-    puts f.read
+jobs = %w(http://www.google.com/ http://www.ruby-lang.org/ http://www.github.com/).map do |url|
+  Eventless.spawn do
+    open("http://www.google.com/") do |f|
+      puts f.read
+    end
   end
-end.join
+end
+
+jobs.each { |j| j.join }
