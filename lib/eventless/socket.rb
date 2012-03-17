@@ -23,6 +23,8 @@ class BasicSocket < IO
   alias_method :write_block, :write
   def write(str)
     STDERR.puts "write"
+
+    str = str.to_s
     written = 0
 
     loop do
@@ -47,6 +49,17 @@ class BasicSocket < IO
     end
 
     result
+  end
+
+  def print(*objs)
+    objs[0] = $_ if objs.size == 0
+
+    objs.each_with_index do |obj, i|
+      write($,) if $, and i > 0
+      write(obj)
+    end
+
+    write($\) if $\ and objs.size > 0
   end
 
   ################
@@ -122,7 +135,7 @@ class BasicSocket < IO
     end
 
     return nil if buffer.length == 0
-    if buffer.length > length
+    if length and buffer.length > length
       byte_buffer << buffer.slice!(length, buffer.length)
     end
 
@@ -220,6 +233,7 @@ class BasicSocket < IO
 end
 
 class Socket < BasicSocket
+
   alias_method :connect_block, :connect
   def connect(*args)
     STDERR.puts "connect"
@@ -269,6 +283,7 @@ class Socket < BasicSocket
 
     pair
   end
+
 end
 
 module Eventless
@@ -283,7 +298,7 @@ module Eventless
       connect(Socket.pack_sockaddr_in(remote_port, remote_host))
 
       if local_host && local_port
-        bind(Sock.pack_sockaddr_in(local_port, local_host))
+        bind(Socket.pack_sockaddr_in(local_port, local_host))
       end
     end
 

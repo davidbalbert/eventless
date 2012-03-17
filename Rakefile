@@ -1,4 +1,10 @@
 require 'bundler/gem_tasks'
+require 'rake/extensiontask'
+
+Rake::ExtensionTask.new('sockaddr') do |ext|
+  ext.lib_dir = "lib/eventless"
+  ext.ext_dir = "ext/sockaddr"
+end
 
 SPECS = [
   "test/rubyspec/library/socket/basicsocket",
@@ -40,7 +46,7 @@ task :console do
     repl = "irb"
   end
 
-  sh "#{repl} -Ilib -rubygems -reventless"
+  sh "#{repl} -rubygems -r'bundler/setup' -reventless"
 end
 
 task :c => :console
