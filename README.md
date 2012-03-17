@@ -17,9 +17,7 @@ Because Eventless monkey patches the core library (eww, gross, I know), any netw
 require 'eventless'
 require 'open-uri'
 
-# no async dns support yet, so we'll request IP addresses
-# all of these are google.com
-fibers = %w(74.125.226.240 74.125.226.241 74.125.226.242 74.125.226.243 74.125.226.244).map do |url|
+fibers = %w(http://www.google.com/ http://www.ruby-lang.org/ http://www.github.com/).map do |url|
   Eventless.spawn do
     open("http://#{url}/") { |f| puts f.read }
   end
@@ -81,10 +79,11 @@ Remember, right now Eventless only works on Ruby 1.9.
 - `IO#write*`
 - `timeout.rb`
 - `open-uri`
+- DNS resolution for `IPSocket.getaddress` and `Socket.(pack_)sockaddr_in`
 
 ###What doesn't work
 - All the other `Socket` code.
-- DNS resolution
+- All other DNS resolution
 - Everything else
 
 ##Contributing
