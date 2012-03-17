@@ -5,6 +5,7 @@ pkg/*
 *.swp
 .rvmrc
 tags
+TAGS
 tmp
 *.bundle
 *.so
