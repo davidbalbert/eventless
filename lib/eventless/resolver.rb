@@ -3,6 +3,8 @@ require 'socket'
 require 'cares'
 require 'ipaddress'
 
+require 'eventless/sockaddr'
+
 module Eventless
   class Loop
     SocketHandler = Struct.new(:read_watcher, :write_watcher)
@@ -108,5 +110,22 @@ class << IPSocket
     Eventless.loop.transfer
 
     addr
+  end
+end
+
+class Socket < BasicSocket
+  class << self
+    alias_method :sockaddr_in_block, :sockaddr_in
+    alias_method :pack_sockaddr_in_block, :pack_sockaddr_in
+
+    def pack_sockaddr_in(port, host)
+      STDERR.puts "Sockaddr.pack_sockaddr_in"
+
+      ip = IPAddress.parse(IPSocket.getaddress(host))
+      family = ip.ipv6? ? Socket::AF_INET6 : Socket::AF_INET
+
+      Eventless::Sockaddr.pack_sockaddr_in(port, ip.to_s, family)
+    end
+    alias_method :sockaddr_in, :pack_sockaddr_in
   end
 end
