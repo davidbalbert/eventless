@@ -1,310 +1,310 @@
 require 'socket'
 require 'fcntl'
+module Eventless
+  RealBasicSocket = ::BasicSocket
+  RealSocket = ::Socket
+  RealTCPSocket = ::TCPSocket
+  RealTCPServer = ::TCPServer
+  RealUDPSocket = ::UDPSocket
+  RealUDPServer = ::UDPServer
 
-class BasicSocket < IO
-  ##############
-  # Sending data
-  alias_method :syswrite_block, :syswrite
-  def syswrite(*args)
-    STDERR.puts "syswrite"
-    begin
-      flags = fcntl(Fcntl::F_GETFL, 0)
-      result = write_nonblock(*args)
-      fcntl(Fcntl::F_SETFL, flags)
-    rescue IO::WaitWritable, Errno::EINTR
-      fcntl(Fcntl::F_SETFL, flags)
-      wait(Eventless.loop.io(:write, self))
-      retry
+  class Eventless::BasicSocket
+    class << self
+      alias_method :for_fd, :new
+    end
+    
+    def initialize(*args)
+      @socket = Eventless.const_get("Real#{self.class}").for_fd(*args)
     end
 
-    result
-  end
-
-  alias_method :write_block, :write
-  def write(str)
-    STDERR.puts "write"
-
-    str = str.to_s
-    written = 0
-
-    loop do
-      written += syswrite(str[written, str.length])
-      break if written == str.length
-    end
-
-    str.length
-  end
-
-  alias_method :sendmsg_block, :sendmsg
-  def sendmsg(*args)
-    STDERR.puts "sendmsg"
-    begin
-      flags = fcntl(Fcntl::F_GETFL, 0)
-      result = sendmsg_nonblock(*args)
-      fcntl(Fcntl::F_SETFL, flags)
-    rescue IO::WaitWritable
-      fcntl(Fcntl::F_SETFL, flags)
-      wait(Eventless.loop.io(:write, self))
-      retry
-    end
-
-    result
-  end
-
-  def print(*objs)
-    objs[0] = $_ if objs.size == 0
-
-    objs.each_with_index do |obj, i|
-      write($,) if $, and i > 0
-      write(obj)
-    end
-
-    write($\) if $\ and objs.size > 0
-  end
-
-  ################
-  # Receiving data
-  BUFFER_LENGTH = 128*1024
-
-  alias_method :sysread_block, :sysread
-  def sysread(*args)
-    STDERR.puts "sysread"
-    buffer = ""
-    begin
-      flags = fcntl(Fcntl::F_GETFL, 0)
-      buffer << read_nonblock(*args)
-      fcntl(Fcntl::F_SETFL, flags)
-    rescue IO::WaitReadable
-      fcntl(Fcntl::F_SETFL, flags)
-      wait(Eventless.loop.io(:read, self))
-      retry
-    end
-
-    buffer
-  end
-
-  def readpartial(length=nil, buffer=nil)
-    raise ArgumentError if !length.nil? && length < 0
-    STDERR.puts "readpartial"
-
-    buffer = "" if buffer.nil?
-    if byte_buffer.length >= length
-      buffer << byte_buffer.slice!(0, length)
-    elsif byte_buffer.length > 0
-      buffer << byte_buffer.slice!(0, byte_buffer.length)
-    else
-      buffer << sysread(length)
-    end
-
-    buffer
-  end
-
-
-  alias_method :read_block, :read
-  def read(length=nil, buffer=nil)
-    raise ArgumentError if !length.nil? && length < 0
-    STDERR.puts "read" unless length == 1
-
-    return "" if length == 0
-    buffer = "" if buffer.nil?
-
-    if length.nil?
-      loop do
-        begin
-          buffer << sysread(BUFFER_LENGTH)
-        rescue EOFError
-          break
-        end
+    ##############
+    # Sending data
+    def syswrite(*args)
+      STDERR.puts "syswrite"
+      begin
+        flags = @socket.fcntl(Fcntl::F_GETFL, 0)
+        result = @socket.write_nonblock(*args)
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+      rescue IO::WaitWritable, Errno::EINTR
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+        wait(Eventless.loop.io(:write, self))
+        retry
       end
-    else
+
+      result
+    end
+
+    def write(str)
+      STDERR.puts "write"
+
+      str = str.to_s
+      written = 0
+
+      loop do
+        written += syswrite(str[written, str.length])
+        break if written == str.length
+      end
+
+      str.length
+    end
+
+    def sendmsg(*args)
+      STDERR.puts "sendmsg"
+      begin
+        flags = @socket.fcntl(Fcntl::F_GETFL, 0)
+        result = @socket.sendmsg_nonblock(*args)
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+      rescue IO::WaitWritable
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+        wait(Eventless.loop.io(:write, self))
+        retry
+      end
+
+      result
+    end
+
+    def print(*objs)
+      objs[0] = $_ if objs.size == 0
+
+      objs.each_with_index do |obj, i|
+        write($,) if $, and i > 0
+        write(obj)
+      end
+
+      write($\) if $\ and objs.size > 0
+    end
+
+    ################
+    # Receiving data
+    BUFFER_LENGTH = 128*1024
+
+    def sysread(*args)
+      STDERR.puts "sysread"
+      buffer = ""
+      begin
+        flags = @socket.fcntl(Fcntl::F_GETFL, 0)
+        buffer << @socket.read_nonblock(*args)
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+      rescue IO::WaitReadable
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+        wait(Eventless.loop.io(:read, self))
+        retry
+      end
+
+      buffer
+    end
+
+    def readpartial(length=nil, buffer=nil)
+      raise ArgumentError if !length.nil? && length < 0
+      STDERR.puts "readpartial"
+
+      buffer = "" if buffer.nil?
       if byte_buffer.length >= length
-        return byte_buffer.slice!(0, length)
+        buffer << byte_buffer.slice!(0, length)
       elsif byte_buffer.length > 0
         buffer << byte_buffer.slice!(0, byte_buffer.length)
+      else
+        buffer << sysread(length)
       end
 
-      remaining = length - buffer.length
-      while buffer.length < length && remaining > 0
-        begin
-          buffer << sysread(remaining > BUFFER_LENGTH ? remaining : BUFFER_LENGTH)
-          remaining = length - buffer.length
-        rescue EOFError
-          break
+      buffer
+    end
+
+    def read(length=nil, buffer=nil)
+      raise ArgumentError if !length.nil? && length < 0
+      STDERR.puts "read" unless length == 1
+
+      return "" if length == 0
+      buffer = "" if buffer.nil?
+
+      if length.nil?
+        loop do
+          begin
+            buffer << sysread(BUFFER_LENGTH)
+          rescue EOFError
+            break
+          end
+        end
+      else
+        if byte_buffer.length >= length
+          return byte_buffer.slice!(0, length)
+        elsif byte_buffer.length > 0
+          buffer << byte_buffer.slice!(0, byte_buffer.length)
+        end
+
+        remaining = length - buffer.length
+        while buffer.length < length && remaining > 0
+          begin
+            buffer << sysread(remaining > BUFFER_LENGTH ? remaining : BUFFER_LENGTH)
+            remaining = length - buffer.length
+          rescue EOFError
+            break
+          end
         end
       end
+
+      return nil if buffer.length == 0
+      if length and buffer.length > length
+        byte_buffer << buffer.slice!(length, buffer.length)
+      end
+
+      buffer
     end
 
-    return nil if buffer.length == 0
-    if length and buffer.length > length
-      byte_buffer << buffer.slice!(length, buffer.length)
+    def readchar
+      c = read(1)
+      raise EOFError if c.nil?
+      c
     end
 
-    buffer
-  end
-
-  alias_method :readchar_block, :readchar
-  def readchar
-    c = read(1)
-    raise EOFError if c.nil?
-    c
-  end
-
-  alias_method :getc_block, :getc
-  def getc
-    read(1)
-  end
-
-  alias_method :gets_block, :gets
-  def gets(sep=$/, limit=nil)
-    STDERR.puts "gets"
-
-    if sep.kind_of? Numeric and limit.nil?
-      limit = sep
-      sep = $/
+    def getc
+      read(1)
     end
 
-    sep = "\n\n" if sep == ""
-    str = ""
-    if sep.nil?
-      str = read
-    else
-      while str.index(sep).nil?
-        c = read(1)
-        break if c.nil?
-        str << c
-        break if not limit.nil? and str.length == limit
+    def gets(sep=$/, limit=nil)
+      STDERR.puts "gets"
+
+      if sep.kind_of? Numeric and limit.nil?
+        limit = sep
+        sep = $/
+      end
+
+      sep = "\n\n" if sep == ""
+      str = ""
+      if sep.nil?
+        str = read
+      else
+        while str.index(sep).nil?
+          c = read(1)
+          break if c.nil?
+          str << c
+          break if not limit.nil? and str.length == limit
+        end
+      end
+
+      $_ = str
+      str
+    end
+
+    def recv(*args)
+      STDERR.puts "recv"
+      begin
+        flags = @socket.fcntl(Fcntl::F_GETFL, 0)
+        mesg = @socket.recv_nonblock(*args)
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+      rescue IO::WaitReadable
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+        wait(Eventless.loop.io(:read, self))
+        retry
+      end
+
+      mesg
+    end
+
+    def recvmsg(*args)
+      STDERR.puts "recvmsg"
+      begin
+        flags = @socket.fcntl(Fcntl::F_GETFL, 0)
+        msg = @socket.recvmsg_nonblock(*args)
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+      rescue IO::WaitReadable
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+        wait(Eventless.loop.io(:read, self))
+        retry
+      end
+
+      msg
+    end
+
+    private
+
+    def socket=(socket)
+      @socket = socket
+    end
+
+    # XXX: eventually this may have a second command called timeout
+    def wait(watcher)
+      Eventless.loop.attach(watcher)
+      begin
+        Eventless.loop.transfer
+      ensure
+        watcher.detach
       end
     end
 
-    $_ = str
-    str
-  end
-
-  alias_method :recv_block, :recv
-  def recv(*args)
-    STDERR.puts "recv"
-    begin
-      flags = fcntl(Fcntl::F_GETFL, 0)
-      mesg = recv_nonblock(*args)
-      fcntl(Fcntl::F_SETFL, flags)
-    rescue IO::WaitReadable
-      fcntl(Fcntl::F_SETFL, flags)
-      wait(Eventless.loop.io(:read, self))
-      retry
+    def byte_buffer
+      @buffer ||= ""
     end
 
-    mesg
-  end
-
-  alias_method :recvmsg_block, :recvmsg
-  def recvmsg(*args)
-    STDERR.puts "recvmsg"
-    begin
-      flags = fcntl(Fcntl::F_GETFL, 0)
-      msg = recvmsg_nonblock(*args)
-      fcntl(Fcntl::F_SETFL, flags)
-    rescue IO::WaitReadable
-      fcntl(Fcntl::F_SETFL, flags)
-      wait(Eventless.loop.io(:read, self))
-      retry
-    end
-
-    msg
-  end
-
-  private
-  # XXX: eventually this may have a second command called timeout
-  def wait(watcher)
-    Eventless.loop.attach(watcher)
-    begin
-      Eventless.loop.transfer
-    ensure
-      watcher.detach
+    def byte_buffer=(buffer)
+      @buffer = buffer
     end
   end
 
-  def byte_buffer
-    @buffer ||= ""
-  end
+  class Eventless::Socket < Eventless::BasicSocket
 
-  def byte_buffer=(buffer)
-    @buffer = buffer
-  end
-end
-
-class Socket < BasicSocket
-
-  alias_method :connect_block, :connect
-  def connect(*args)
-    STDERR.puts "connect"
-    begin
-      flags = fcntl(Fcntl::F_GETFL, 0)
-      connect_nonblock(*args)
-      fcntl(Fcntl::F_SETFL, flags)
-    rescue IO::WaitWritable
-      fcntl(Fcntl::F_SETFL, flags)
-      #STDERR.puts "connect: about to sleep"
-      wait(Eventless.loop.io(:write, self))
-      retry
-    rescue Errno::EISCONN
-      fcntl(Fcntl::F_SETFL, flags)
-    end
-    #STDERR.puts "Connected!"
-  end
-
-  alias_method :accept_block, :accept
-  def accept(*args)
-    STDERR.puts "accept"
-    begin
-      flags = fcntl(Fcntl::F_GETFL, 0)
-      sock_pair = accept_nonblock(*args)
-      fcntl(Fcntl::F_SETFL, flags)
-    rescue IO::WaitReadable, Errno::EINTR
-      fcntl(Fcntl::F_SETFL, flags)
-      wait(Eventless.loop.io(:read, self))
-      retry
+    def initialize(*args)
+      @socket = Eventless.const_get("Real#{self.class}").new(*args)
     end
 
-    sock_pair
-  end
-
-  alias_method :recvfrom_block, :recvfrom
-  def recvfrom(*args)
-    STDERR.puts "recvfrom"
-    begin
-      flags = fcntl(Fcntl::F_GETFL, 0)
-      pair = recvfrom_nonblock(*args)
-      fcntl(Fcntl::F_SETFL, flags)
-    rescue IO::WaitReadable
-      fcntl(Fcntl::F_SETFL, flags)
-      wait(Eventless.loop.io(:read, self))
-      retry
+    def connect(*args)
+      STDERR.puts "connect"
+      begin
+        flags = @socket.fcntl(Fcntl::F_GETFL, 0)
+        @socket.connect_nonblock(*args)
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+      rescue IO::WaitWritable
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+        #STDERR.puts "connect: about to sleep"
+        wait(Eventless.loop.io(:write, self))
+        retry
+      rescue Errno::EISCONN
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+      end
+      #STDERR.puts "Connected!"
     end
 
-    pair
+    def accept(*args)
+      STDERR.puts "accept"
+      begin
+        flags = @socket.fcntl(Fcntl::F_GETFL, 0)
+        sock_pair = @socket.accept_nonblock(*args)
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+      rescue IO::WaitReadable, Errno::EINTR
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+        wait(Eventless.loop.io(:read, self))
+        retry
+      end
+
+      sock_pair
+    end
+
+    def recvfrom(*args)
+      STDERR.puts "recvfrom"
+      begin
+        flags = @socket.fcntl(Fcntl::F_GETFL, 0)
+        pair = @socket.recvfrom_nonblock(*args)
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+      rescue IO::WaitReadable
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+        wait(Eventless.loop.io(:read, self))
+        retry
+      end
+
+      pair
+    end
+
   end
 
-end
-
-module Eventless
   AF_MAP = {}
-  ::Socket.constants.grep(/^AF_/).each do |c|
-    AF_MAP[Socket.const_get(c)] = c.to_s
+  RealSocket.constants.grep(/^AF_/).each do |c|
+    AF_MAP[RealSocket.const_get(c)] = c.to_s
   end
 
-  class TCPSocket < ::Socket
-    def initialize(remote_host, remote_port, local_host=nil, local_port=nil)
-      super(:INET, :STREAM)
-      connect(Socket.pack_sockaddr_in(remote_port, remote_host))
-
-      if local_host && local_port
-        bind(Socket.pack_sockaddr_in(local_port, local_host))
-      end
-    end
-
+  class Eventless::IPSocket < Eventless::BasicSocket
     def peeraddr(reverse_lookup=nil)
       reverse_lookup = should_reverse_lookup?(reverse_lookup)
-      addr = remote_address
+      addr = @socket.remote_address
 
       name_info = reverse_lookup ? addr.getnameinfo[0] : addr.ip_address
 
@@ -319,7 +319,7 @@ module Eventless
       when false, :numeric
         false
       when nil
-        not do_not_reverse_lookup
+        not @socket.do_not_reverse_lookup
       else
         if reverse_lookup.kind_of? Symbol
           raise TypeError, "wrong argument type #{reverse_lookup.class} (expected Symbol)"
@@ -330,49 +330,47 @@ module Eventless
     end
   end
 
-  class TCPServer < ::Socket
+  class Eventless::TCPSocket < Eventless::IPSocket
+    class << self
+      alias_method :open, :new
+    end
+
+    def initialize(remote_host, remote_port, local_host=nil, local_port=nil)
+      @socket = Socket.new(:INET, :STREAM)
+      @socket.connect(Socket.pack_sockaddr_in(remote_port, remote_host))
+
+      if local_host && local_port
+        @socket.bind(Socket.pack_sockaddr_in(local_port, local_host))
+      end
+    end
+
+  end
+
+  class Eventless::TCPServer < Eventless::TCPSocket
+    class << self
+      alias_method :open, :new
+    end
+
     def initialize(hostname=nil, port)
+      # XXX: addrinfo.foreach will block on dns resolution
+      # need a thread pool to make it work properly
       Addrinfo.foreach(hostname, port, nil, :STREAM, nil, Socket::AI_PASSIVE) do |ai|
         begin
-          # I know calling super multiple times looks problematic, but after
-          # reading through rsock_init_sock() in ext/socket/init.c, it looks
-          # like as long as we make sure to close the extra file descripters,
-          # it should be ok.
-          super(ai.afamily, ai.socktype, ai.protocol)
-          setsockopt(:SOCKET, :REUSEADDR, true)
-          bind(ai)
+          @socket = Socket.new(ai.afamily, ai.socktype, ai.protocol)
+          @socket.setsockopt(:SOCKET, :REUSEADDR, true)
+          @socket.bind(ai)
         rescue
-          close
+          @socket.close
         else
           break
         end
       end
 
-      listen(5)
+      @socket.listen(5)
     end
 
     def accept
-      TCPSocket.for_fd(super[0].fileno)
+      TCPSocket.for_fd(@socket.accept[0].fileno)
     end
-  end
-end
-
-class TCPSocket
-  class << self
-    def new(*args)
-      Eventless::TCPSocket.new(*args)
-    end
-
-    alias_method :open, :new
-  end
-end
-
-class TCPServer
-  class << self
-    def new(*args)
-      Eventless::TCPServer.new(*args)
-    end
-
-    alias_method :open, :new
   end
 end
