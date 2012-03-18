@@ -35,8 +35,25 @@ module Eventless
   class Eventless::BasicSocket
     class << self
       alias_method :for_fd, :new
+
+      def open(*args)
+        if block_given?
+          s = new(*args)
+          result = nil
+          begin
+            result = yield s
+          ensure
+            s.close
+          end
+
+          result
+        else
+          new(*args)
+        end
+      end
     end
-    
+
+    # IO.new is the same as IO.for_fd
     def initialize(*args)
       @socket = Eventless.const_get("Real#{self.class}").for_fd(*args)
     end
@@ -317,7 +334,6 @@ module Eventless
 
       pair
     end
-
   end
 
   AF_MAP = {}
