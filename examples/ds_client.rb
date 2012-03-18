@@ -4,6 +4,7 @@
 # Nice to see you!
 # Today would be improved by snails, don't you think?
 # T
+# three four five six seven eight nine ten (in some order or other)
 
 $:.unshift File.join(File.dirname(__FILE__), "..", "lib")
 require 'socket'

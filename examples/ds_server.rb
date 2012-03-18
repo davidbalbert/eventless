@@ -13,6 +13,13 @@ loop {
       client.puts "Nice to see you!\n"
       client.puts "Today would be improved by snails, don't you think?"
       client.putc "Two"
+
+      tests = %w(three four five six seven eight nine ten).map do |word|
+        Eventless.spawn { sleep Random.rand(6); client.puts word }
+      end
+
+      tests.each { |t| t.join }
+
       client.close
   end
 }
