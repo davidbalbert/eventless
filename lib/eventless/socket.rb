@@ -38,6 +38,13 @@ module Eventless
       end
     end
 
+    # methods to pass through to @socket defined on IO:
+    [:closed?].each do |sym|
+      define_method(sym) do |*args|
+        @socket.__send__(sym, *args)
+      end
+    end
+
     # IO.new is the same as IO.for_fd
     def initialize(*args)
       @socket = Eventless.const_get("Real#{self.class}").for_fd(*args)
