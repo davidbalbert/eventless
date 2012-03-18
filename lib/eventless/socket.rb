@@ -52,7 +52,7 @@ module Eventless
 
     # IO.new is the same as IO.for_fd
     def initialize(*args)
-      @socket = Eventless.const_get("Real#{self.class}").for_fd(*args)
+      @socket = self.class.real_class.for_fd(*args)
     end
 
     ##############
