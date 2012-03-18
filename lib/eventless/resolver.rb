@@ -83,49 +83,46 @@ module Eventless
       handler
     end
   end
-end
 
-class << IPSocket
-  alias_method :old_getaddress, :getaddress
 
-  def getaddress(hostname)
-    # return if we're already a valid ip address
-    begin
-      IPAddress.parse hostname
-      return hostname
-    rescue
+
+  class IPSocket
+    def self.getaddress(hostname)
+      # return if we're already a valid ip address
+      begin
+        IPAddress.parse hostname
+        return hostname
+      rescue
+      end
+
+      fiber = Fiber.current
+      addr = nil
+      Eventless.resolver.gethostbyname(hostname, RealSocket::AF_UNSPEC) do |name, aliases, faimly, *addrs|
+        addr = addrs[0]
+
+        # XXX: I thought calling fiber.transfer(addrs[0]) would make
+        # Eventless.loop.transfer return addrs[0], but it doesn't. I'm not sure
+        # why. If anyone knows how to fix it, let me know. I think closing around
+        # addr is a bit hacky.
+        fiber.transfer
+      end
+      Eventless.loop.transfer
+
+      addr
     end
-
-    fiber = Fiber.current
-    addr = nil
-    Eventless.resolver.gethostbyname(hostname, Socket::AF_UNSPEC) do |name, aliases, faimly, *addrs|
-      addr = addrs[0]
-
-      # XXX: I thought calling fiber.transfer(addrs[0]) would make
-      # Eventless.loop.transfer return addrs[0], but it doesn't. I'm not sure
-      # why. If anyone knows how to fix it, let me know. I think closing around
-      # addr is a bit hacky.
-      fiber.transfer
-    end
-    Eventless.loop.transfer
-
-    addr
   end
-end
 
-class Socket < BasicSocket
-  class << self
-    alias_method :sockaddr_in_block, :sockaddr_in
-    alias_method :pack_sockaddr_in_block, :pack_sockaddr_in
+  class Socket
+    class << self
+      def pack_sockaddr_in(port, host)
+        STDERR.puts "Sockaddr.pack_sockaddr_in"
 
-    def pack_sockaddr_in(port, host)
-      STDERR.puts "Sockaddr.pack_sockaddr_in"
+        ip = IPAddress.parse(IPSocket.getaddress(host))
+        family = ip.ipv6? ? RealSocket::AF_INET6 : RealSocket::AF_INET
 
-      ip = IPAddress.parse(IPSocket.getaddress(host))
-      family = ip.ipv6? ? Socket::AF_INET6 : Socket::AF_INET
-
-      Eventless::Sockaddr.pack_sockaddr_in(port, ip.to_s, family)
+        Eventless::Sockaddr.pack_sockaddr_in(port, ip.to_s, family)
+      end
+      alias_method :sockaddr_in, :pack_sockaddr_in
     end
-    alias_method :sockaddr_in, :pack_sockaddr_in
   end
 end
