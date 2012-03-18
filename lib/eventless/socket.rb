@@ -296,6 +296,15 @@ module Eventless
       end
     end
 
+    class << self
+      # class methods to pass through to @socket defined on RealSocket:
+      [:gethostname].each do |sym|
+        define_method(sym) do |*args|
+          self.real_class.__send__(sym, *args)
+        end
+      end
+    end
+
     def connect(*args)
       STDERR.puts "connect"
       begin
