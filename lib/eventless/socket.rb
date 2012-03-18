@@ -3,10 +3,34 @@ require 'fcntl'
 module Eventless
   RealBasicSocket = ::BasicSocket
   RealSocket = ::Socket
+  RealIPSocket = ::IPSocket
   RealTCPSocket = ::TCPSocket
   RealTCPServer = ::TCPServer
+
+  # We will do UDP sockets, but I haven't looked at them yet:
   RealUDPSocket = ::UDPSocket
   RealUDPServer = ::UDPServer
+
+  # I haven't looked at this yet:
+  # RealSOCKSSocket = ::SOCKSSocket
+
+  # Should we even support these?
+  # RealUNIXSocket = ::UNIXSocket
+  # RealUNIXServer = ::UNIXServer
+
+  Object.class_eval do
+    remove_const(:BasicSocket)
+    remove_const(:Socket)
+    remove_const(:IPSocket)
+    remove_const(:TCPSocket)
+    remove_const(:TCPServer)
+
+    const_set(:BasicSocket, Eventless::BasicSocket)
+    const_set(:Socket, Eventless::Socket)
+    const_set(:IPSocket, Eventless::IPSocket)
+    const_set(:TCPSocket, Eventless::TCPSocket)
+    const_set(:TCPServer, Eventless::TCPServer)
+  end
 
   class Eventless::BasicSocket
     class << self
