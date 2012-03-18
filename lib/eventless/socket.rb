@@ -283,9 +283,9 @@ module Eventless
   end
 
   class Socket < BasicSocket
-    def self.for_fd(fd)
+    def self.for_fd(*args)
       sock = new(false)
-      sock.__send__(:socket=, real_class.for_fd(fd))
+      sock.__send__(:socket=, real_class.for_fd(*args))
 
       sock
     end
@@ -350,6 +350,7 @@ module Eventless
   end
 
   class IPSocket < BasicSocket
+
     def peeraddr(reverse_lookup=nil)
       reverse_lookup = should_reverse_lookup?(reverse_lookup)
       addr = @socket.remote_address
@@ -381,14 +382,23 @@ module Eventless
   class TCPSocket < IPSocket
     class << self
       alias_method :open, :new
+
+      def for_fd(*args)
+        sock = new(false, false)
+        sock.__send__(:socket=, real_class.for_fd(*args))
+
+        sock
+      end
     end
 
     def initialize(remote_host, remote_port, local_host=nil, local_port=nil)
-      @socket = RealSocket.new(:INET, :STREAM)
-      @socket.connect(Socket.pack_sockaddr_in(remote_port, remote_host))
+      unless remote_host == false
+        @socket = RealSocket.new(:INET, :STREAM)
+        @socket.connect(Socket.pack_sockaddr_in(remote_port, remote_host))
 
-      if local_host && local_port
-        @socket.bind(Socket.pack_sockaddr_in(local_port, local_host))
+        if local_host && local_port
+          @socket.bind(Socket.pack_sockaddr_in(local_port, local_host))
+        end
       end
     end
 
@@ -400,21 +410,23 @@ module Eventless
     end
 
     def initialize(hostname=nil, port)
-      # XXX: addrinfo.foreach will block on dns resolution
-      # need a thread pool to make it work properly
-      Addrinfo.foreach(hostname, port, nil, :STREAM, nil, RealSocket::AI_PASSIVE) do |ai|
-        begin
-          @socket = RealSocket.new(ai.afamily, ai.socktype, ai.protocol)
-          @socket.setsockopt(:SOCKET, :REUSEADDR, true)
-          @socket.bind(ai)
-        rescue
-          @socket.close
-        else
-          break
+      unless hostname == false and port == false
+        # XXX: addrinfo.foreach will block on dns resolution
+        # need a thread pool to make it work properly
+        Addrinfo.foreach(hostname, port, nil, :STREAM, nil, RealSocket::AI_PASSIVE) do |ai|
+          begin
+            @socket = RealSocket.new(ai.afamily, ai.socktype, ai.protocol)
+            @socket.setsockopt(:SOCKET, :REUSEADDR, true)
+            @socket.bind(ai)
+          rescue
+            @socket.close
+          else
+            break
+          end
         end
-      end
 
-      @socket.listen(5)
+        @socket.listen(5)
+      end
     end
 
     def accept
