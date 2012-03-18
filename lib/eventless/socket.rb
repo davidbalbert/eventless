@@ -364,7 +364,7 @@ module Eventless
     end
 
     def initialize(remote_host, remote_port, local_host=nil, local_port=nil)
-      @socket = Socket.new(:INET, :STREAM)
+      @socket = RealSocket.new(:INET, :STREAM)
       @socket.connect(Socket.pack_sockaddr_in(remote_port, remote_host))
 
       if local_host && local_port
@@ -384,7 +384,7 @@ module Eventless
       # need a thread pool to make it work properly
       Addrinfo.foreach(hostname, port, nil, :STREAM, nil, RealSocket::AI_PASSIVE) do |ai|
         begin
-          @socket = Socket.new(ai.afamily, ai.socktype, ai.protocol)
+          @socket = RealSocket.new(ai.afamily, ai.socktype, ai.protocol)
           @socket.setsockopt(:SOCKET, :REUSEADDR, true)
           @socket.bind(ai)
         rescue
