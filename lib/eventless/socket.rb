@@ -39,7 +39,7 @@ module Eventless
     end
 
     # methods to pass through to @socket defined on IO:
-    [:closed?].each do |sym|
+    [:closed?, :close, :read_nonblock].each do |sym|
       define_method(sym) do |*args|
         @socket.__send__(sym, *args)
       end
