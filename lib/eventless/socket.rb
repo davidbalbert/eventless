@@ -292,7 +292,7 @@ module Eventless
 
     def initialize(domain, socket=nil, protocol=nil)
       unless domain == false
-        @socket = real_class.new(domain, socket, protocol)
+        @socket = self.class.real_class.new(domain, socket, protocol)
       end
     end
 
