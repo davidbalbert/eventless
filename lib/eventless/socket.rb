@@ -18,24 +18,29 @@ module Eventless
   # RealUNIXServer = ::UNIXServer
 
   class BasicSocket
-    class << self
-      alias_method :for_fd, :new
+    def self.for_fd(*args)
+      new(*args)
+    end
 
-      def open(*args)
-        if block_given?
-          s = new(*args)
-          result = nil
-          begin
-            result = yield s
-          ensure
-            s.close
-          end
-
-          result
-        else
-          new(*args)
+    def self.open(*args)
+      if block_given?
+        s = new(*args)
+        result = nil
+        begin
+          result = yield s
+        ensure
+          s.close
         end
+
+        result
+      else
+        new(*args)
       end
+    end
+
+    def self.real_class
+      real_class_name = "Real#{self.name.split("::").last}"
+      Eventless.const_get(real_class_name)
     end
 
     # methods to pass through to @socket defined on IO:
@@ -250,15 +255,6 @@ module Eventless
     end
 
     private
-
-    def socket=(socket)
-      @socket = socket
-    end
-
-    def socket
-      @socket
-    end
-
     # XXX: eventually this may have a second command called timeout
     def wait(watcher)
       Eventless.loop.attach(watcher)
@@ -267,6 +263,14 @@ module Eventless
       ensure
         watcher.detach
       end
+    end
+
+    def socket=(socket)
+      @socket = socket
+    end
+
+    def socket
+      @socket
     end
 
     def byte_buffer
@@ -279,8 +283,17 @@ module Eventless
   end
 
   class Socket < BasicSocket
-    def initialize(*args)
-      @socket = Eventless.const_get("Real#{self.class.name.split("::").last}").new(*args)
+    def self.for_fd(fd)
+      sock = new(false)
+      sock.__send__(:socket=, real_class.for_fd(fd))
+
+      sock
+    end
+
+    def initialize(domain, socket=nil, protocol=nil)
+      unless domain == false
+        @socket = real_class.new(domain, socket, protocol)
+      end
     end
 
     def connect(*args)
