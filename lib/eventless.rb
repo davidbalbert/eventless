@@ -1,7 +1,7 @@
 require 'eventless/version'
 require 'eventless/fiber'
-require 'eventless/loop'
 require 'eventless/socket'
+require 'eventless/loop'
 require 'eventless/resolver'
 require 'eventless/select'
 require 'eventless/timeout'

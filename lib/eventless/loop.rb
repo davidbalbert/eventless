@@ -42,7 +42,7 @@ module Eventless
       fiber = Fiber.current
       callback = proc { fiber.transfer } unless callback
 
-      watcher = Coolio::IOWatcher.new(io, if mode == :read then 'r' else 'w' end)
+      watcher = Coolio::IOWatcher.new(io.send(:socket), if mode == :read then 'r' else 'w' end)
       case mode
       when :read
         watcher.on_readable(&callback)

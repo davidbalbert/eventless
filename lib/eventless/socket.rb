@@ -9,7 +9,6 @@ module Eventless
 
   # We will do UDP sockets, but I haven't looked at them yet:
   RealUDPSocket = ::UDPSocket
-  RealUDPServer = ::UDPServer
 
   # I haven't looked at this yet:
   # RealSOCKSSocket = ::SOCKSSocket
@@ -18,21 +17,7 @@ module Eventless
   # RealUNIXSocket = ::UNIXSocket
   # RealUNIXServer = ::UNIXServer
 
-  Object.class_eval do
-    remove_const(:BasicSocket)
-    remove_const(:Socket)
-    remove_const(:IPSocket)
-    remove_const(:TCPSocket)
-    remove_const(:TCPServer)
-
-    const_set(:BasicSocket, Eventless::BasicSocket)
-    const_set(:Socket, Eventless::Socket)
-    const_set(:IPSocket, Eventless::IPSocket)
-    const_set(:TCPSocket, Eventless::TCPSocket)
-    const_set(:TCPServer, Eventless::TCPServer)
-  end
-
-  class Eventless::BasicSocket
+  class BasicSocket
     class << self
       alias_method :for_fd, :new
 
@@ -263,6 +248,10 @@ module Eventless
       @socket = socket
     end
 
+    def socket
+      @socket
+    end
+
     # XXX: eventually this may have a second command called timeout
     def wait(watcher)
       Eventless.loop.attach(watcher)
@@ -282,10 +271,9 @@ module Eventless
     end
   end
 
-  class Eventless::Socket < Eventless::BasicSocket
-
+  class Socket < BasicSocket
     def initialize(*args)
-      @socket = Eventless.const_get("Real#{self.class}").new(*args)
+      @socket = Eventless.const_get("Real#{self.class.name.split("::").last}").new(*args)
     end
 
     def connect(*args)
@@ -341,7 +329,7 @@ module Eventless
     AF_MAP[RealSocket.const_get(c)] = c.to_s
   end
 
-  class Eventless::IPSocket < Eventless::BasicSocket
+  class IPSocket < BasicSocket
     def peeraddr(reverse_lookup=nil)
       reverse_lookup = should_reverse_lookup?(reverse_lookup)
       addr = @socket.remote_address
@@ -370,7 +358,7 @@ module Eventless
     end
   end
 
-  class Eventless::TCPSocket < Eventless::IPSocket
+  class TCPSocket < IPSocket
     class << self
       alias_method :open, :new
     end
@@ -386,7 +374,7 @@ module Eventless
 
   end
 
-  class Eventless::TCPServer < Eventless::TCPSocket
+  class TCPServer < TCPSocket
     class << self
       alias_method :open, :new
     end
@@ -394,7 +382,7 @@ module Eventless
     def initialize(hostname=nil, port)
       # XXX: addrinfo.foreach will block on dns resolution
       # need a thread pool to make it work properly
-      Addrinfo.foreach(hostname, port, nil, :STREAM, nil, Socket::AI_PASSIVE) do |ai|
+      Addrinfo.foreach(hostname, port, nil, :STREAM, nil, RealSocket::AI_PASSIVE) do |ai|
         begin
           @socket = Socket.new(ai.afamily, ai.socktype, ai.protocol)
           @socket.setsockopt(:SOCKET, :REUSEADDR, true)
@@ -413,4 +401,18 @@ module Eventless
       TCPSocket.for_fd(@socket.accept[0].fileno)
     end
   end
+end
+
+Object.class_eval do
+  remove_const(:BasicSocket)
+  remove_const(:Socket)
+  remove_const(:IPSocket)
+  remove_const(:TCPSocket)
+  remove_const(:TCPServer)
+
+  const_set(:BasicSocket, Eventless::BasicSocket)
+  const_set(:Socket, Eventless::Socket)
+  const_set(:IPSocket, Eventless::IPSocket)
+  const_set(:TCPSocket, Eventless::TCPSocket)
+  const_set(:TCPServer, Eventless::TCPServer)
 end

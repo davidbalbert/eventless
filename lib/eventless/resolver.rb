@@ -85,8 +85,7 @@ module Eventless
   end
 
 
-
-  class IPSocket
+  class IPSocket < BasicSocket
     def self.getaddress(hostname)
       # return if we're already a valid ip address
       begin
@@ -112,7 +111,7 @@ module Eventless
     end
   end
 
-  class Socket
+  class Socket < BasicSocket
     class << self
       def pack_sockaddr_in(port, host)
         STDERR.puts "Sockaddr.pack_sockaddr_in"
