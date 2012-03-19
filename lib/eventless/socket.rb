@@ -38,9 +38,37 @@ module Eventless
       end
     end
 
-    def self.stock_class
+    def self.stock_class_name
       stock_class_name = "Real#{self.name.split("::").last}"
+    end
+
+    def self.stock_class
       Eventless.const_get(stock_class_name)
+    end
+
+    # Copy over all constants from RealBasicSocket
+    #
+    # We're not just using Module.const_missing, for speed of constant lookup
+    # which presumably happens a lot
+    RealBasicSocket.constants.each do |c|
+      self.const_set(c, RealBasicSocket.const_get(c))
+    end
+
+    # and for everyone who sublcasses us
+    def self.inherited(child)
+      if Eventless.const_defined? child.stock_class_name
+        child.stock_class.constants.each do |c|
+          child.const_set(c, child.stock_class.const_get(c))
+        end
+      end
+    end
+
+    # Needed for libraries that define constants under the classes we wrap
+    # (*Socket, IO). This will be most common for c extensions that use the
+    # extern variables set up in ruby.h to reference commonly used classes
+    # (e.g. rb_cIO for IO).
+    def self.const_missing(const)
+      stock_class.const_get(const)
     end
 
     # methods to pass through to @socket defined on IO:
