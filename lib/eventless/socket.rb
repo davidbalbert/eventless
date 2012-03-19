@@ -403,8 +403,10 @@ module Eventless
     def peeraddr(reverse_lookup=nil)
       reverse_lookup = should_reverse_lookup?(reverse_lookup)
 
-      # TODO: returns an Addrinfo object (which blocks). We will need to fix
-      # this eventually
+      # TODO: Look this over when we deal with making getaddrinfo not block.
+      # remote_address doesn't actually block, it calls getpeername(2),
+      # however, when we deal with getaddrinfo, we may end up create
+      # Eventless::Addrinfo and would want to return that here
       addr = @socket.remote_address
 
       name_info = reverse_lookup ? addr.getnameinfo[0] : addr.ip_address
