@@ -30,6 +30,9 @@ class Fiber
         @exception = e
       end
 
+      # When Threads terminate, they unlock any mutexes that they are currently
+      # holding
+      #
       # Mutex#unlock removes self from @owner[:mutexes], so we must
       # clone self[:mutexes] before iterating.
       if self[:mutexes]
