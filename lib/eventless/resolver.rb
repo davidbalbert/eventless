@@ -95,7 +95,7 @@ module Eventless
 
       fiber = Fiber.current
       addr = nil
-      Eventless.resolver.gethostbyname(hostname, RealSocket::AF_UNSPEC) do |name, aliases, faimly, *addrs|
+      Eventless.resolver.gethostbyname(hostname, Socket::AF_UNSPEC) do |name, aliases, faimly, *addrs|
         addr = addrs[0]
 
         # XXX: I thought calling fiber.transfer(addrs[0]) would make
@@ -116,7 +116,7 @@ module Eventless
         STDERR.puts "Sockaddr.pack_sockaddr_in"
 
         ip = IPAddress.parse(IPSocket.getaddress(host))
-        family = ip.ipv6? ? RealSocket::AF_INET6 : RealSocket::AF_INET
+        family = ip.ipv6? ? Socket::AF_INET6 : Socket::AF_INET
 
         Eventless::Sockaddr.pack_sockaddr_in(port, ip.to_s, family)
       end

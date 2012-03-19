@@ -382,14 +382,17 @@ module Eventless
   end
 
   AF_MAP = {}
-  RealSocket.constants.grep(/^AF_/).each do |c|
-    AF_MAP[RealSocket.const_get(c)] = c.to_s
+  Socket.constants.grep(/^AF_/).each do |c|
+    AF_MAP[Socket.const_get(c)] = c.to_s
   end
 
   class IPSocket < BasicSocket
 
     def peeraddr(reverse_lookup=nil)
       reverse_lookup = should_reverse_lookup?(reverse_lookup)
+
+      # TODO: returns an Addrinfo object (which blocks). We will need to fix
+      # this eventually
       addr = @socket.remote_address
 
       name_info = reverse_lookup ? addr.getnameinfo[0] : addr.ip_address
