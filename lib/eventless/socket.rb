@@ -212,6 +212,36 @@ class BasicSocket < IO
     msg
   end
 
+
+  ##################
+  # Danielle methods
+
+
+  alias_method :putc_block, :putc
+  def putc(arg)
+    arg = arg.to_int.chr if arg.is_a?(Numeric)
+    write(arg.to_s[0])
+  end
+
+  alias_method :puts_block, :puts
+  def puts(*args)
+    STDERR.puts "puts"
+
+    sep = $\ # $/ is the input record separator, $\ is the one for output
+    if args.empty?
+      write("\n")
+    else
+      args.each do |arg|
+        write(arg)
+        write("\n") unless arg[-1] == "\n"
+      end
+    end
+  end
+
+
+  # Danielle methods
+  ##################
+
   private
   # XXX: eventually this may have a second command called timeout
   def wait(watcher)
