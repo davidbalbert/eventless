@@ -283,6 +283,23 @@ module Eventless
     end
 
     private
+    def connect(*args)
+      STDERR.puts "connect"
+      begin
+        flags = @socket.fcntl(Fcntl::F_GETFL, 0)
+        @socket.connect_nonblock(*args)
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+      rescue IO::WaitWritable
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+        #STDERR.puts "connect: about to sleep"
+        wait(Eventless.loop.io(:write, self))
+        retry
+      rescue Errno::EISCONN
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+      end
+      #STDERR.puts "Connected!"
+    end
+
     # XXX: eventually this may have a second command called timeout
     def wait(watcher)
       Eventless.loop.attach(watcher)
@@ -334,20 +351,7 @@ module Eventless
     end
 
     def connect(*args)
-      STDERR.puts "connect"
-      begin
-        flags = @socket.fcntl(Fcntl::F_GETFL, 0)
-        @socket.connect_nonblock(*args)
-        @socket.fcntl(Fcntl::F_SETFL, flags)
-      rescue IO::WaitWritable
-        @socket.fcntl(Fcntl::F_SETFL, flags)
-        #STDERR.puts "connect: about to sleep"
-        wait(Eventless.loop.io(:write, self))
-        retry
-      rescue Errno::EISCONN
-        @socket.fcntl(Fcntl::F_SETFL, flags)
-      end
-      #STDERR.puts "Connected!"
+      super(*args)
     end
 
     def accept(*args)
@@ -434,12 +438,17 @@ module Eventless
     def initialize(remote_host, remote_port, local_host=nil, local_port=nil)
       unless remote_host == false
         @socket = RealSocket.new(:INET, :STREAM)
-        @socket.connect(Socket.pack_sockaddr_in(remote_port, remote_host))
+        connect(Socket.pack_sockaddr_in(remote_port, remote_host))
 
         if local_host && local_port
           @socket.bind(Socket.pack_sockaddr_in(local_port, local_host))
         end
       end
+    end
+
+    private
+    def connect(*args)
+      super(*args)
     end
 
   end
@@ -453,7 +462,7 @@ module Eventless
       unless hostname == false and port == false
         # XXX: addrinfo.foreach will block on dns resolution
         # need a thread pool to make it work properly
-        Addrinfo.foreach(hostname, port, nil, :STREAM, nil, RealSocket::AI_PASSIVE) do |ai|
+        Addrinfo.foreach(hostname, port, nil, :STREAM, nil, Socket::AI_PASSIVE) do |ai|
           begin
             @socket = RealSocket.new(ai.afamily, ai.socktype, ai.protocol)
             @socket.setsockopt(:SOCKET, :REUSEADDR, true)
