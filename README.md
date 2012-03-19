@@ -83,7 +83,7 @@ Remember, right now Eventless only works on Ruby 1.9.
 
 ###What doesn't work
 - All the other `Socket` code.
-- All other DNS resolution
+- All other DNS resolution including `Addrinfo` class
 - Everything else
 
 ##Contributing
