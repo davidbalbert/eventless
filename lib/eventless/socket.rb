@@ -38,9 +38,9 @@ module Eventless
       end
     end
 
-    def self.real_class
-      real_class_name = "Real#{self.name.split("::").last}"
-      Eventless.const_get(real_class_name)
+    def self.stock_class
+      stock_class_name = "Real#{self.name.split("::").last}"
+      Eventless.const_get(stock_class_name)
     end
 
     # methods to pass through to @socket defined on IO:
@@ -52,7 +52,7 @@ module Eventless
 
     # IO.new is the same as IO.for_fd
     def initialize(*args)
-      @socket = self.class.real_class.for_fd(*args)
+      @socket = self.class.stock_class.for_fd(*args)
     end
 
     ##############
@@ -285,14 +285,14 @@ module Eventless
   class Socket < BasicSocket
     def self.for_fd(*args)
       sock = new(false)
-      sock.__send__(:socket=, real_class.for_fd(*args))
+      sock.__send__(:socket=, stock_class.for_fd(*args))
 
       sock
     end
 
     def initialize(domain, socket=nil, protocol=nil)
       unless domain == false
-        @socket = self.class.real_class.new(domain, socket, protocol)
+        @socket = self.class.stock_class.new(domain, socket, protocol)
       end
     end
 
@@ -300,7 +300,7 @@ module Eventless
       # class methods to pass through to @socket defined on RealSocket:
       [:gethostname].each do |sym|
         define_method(sym) do |*args|
-          self.real_class.__send__(sym, *args)
+          self.stock_class.__send__(sym, *args)
         end
       end
     end
@@ -394,7 +394,7 @@ module Eventless
 
       def for_fd(*args)
         sock = new(false, false)
-        sock.__send__(:socket=, real_class.for_fd(*args))
+        sock.__send__(:socket=, stock_class.for_fd(*args))
 
         sock
       end

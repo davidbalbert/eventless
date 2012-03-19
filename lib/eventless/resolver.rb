@@ -84,7 +84,6 @@ module Eventless
     end
   end
 
-
   class IPSocket < BasicSocket
     def self.getaddress(hostname)
       # return if we're already a valid ip address
