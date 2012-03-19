@@ -283,6 +283,8 @@ module Eventless
     end
 
     private
+
+    # connect is private so we can call it from both Socket and TCPSocket
     def connect(*args)
       STDERR.puts "connect"
       begin
@@ -299,6 +301,23 @@ module Eventless
       end
       #STDERR.puts "Connected!"
     end
+
+    # accept is private so we can call it from both Socket and TCPServer
+    def accept
+      STDERR.puts "accept"
+      begin
+        flags = @socket.fcntl(Fcntl::F_GETFL, 0)
+        sock_pair = @socket.accept_nonblock
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+      rescue IO::WaitReadable, Errno::EINTR
+        @socket.fcntl(Fcntl::F_SETFL, flags)
+        wait(Eventless.loop.io(:read, self))
+        retry
+      end
+
+      sock_pair
+    end
+
 
     # XXX: eventually this may have a second command called timeout
     def wait(watcher)
@@ -354,19 +373,8 @@ module Eventless
       super(*args)
     end
 
-    def accept(*args)
-      STDERR.puts "accept"
-      begin
-        flags = @socket.fcntl(Fcntl::F_GETFL, 0)
-        sock_pair = @socket.accept_nonblock(*args)
-        @socket.fcntl(Fcntl::F_SETFL, flags)
-      rescue IO::WaitReadable, Errno::EINTR
-        @socket.fcntl(Fcntl::F_SETFL, flags)
-        wait(Eventless.loop.io(:read, self))
-        retry
-      end
-
-      sock_pair
+    def accept
+      super
     end
 
     def recvfrom(*args)
@@ -479,7 +487,7 @@ module Eventless
     end
 
     def accept
-      TCPSocket.for_fd(@socket.accept[0].fileno)
+      TCPSocket.for_fd(super[0].fileno)
     end
   end
 end
