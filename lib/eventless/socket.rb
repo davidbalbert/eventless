@@ -492,6 +492,9 @@ module Eventless
       TCPSocket.for_fd(super[0].fileno)
     end
   end
+
+  class UDPSocket < IPSocket
+  end
 end
 
 Object.class_eval do
@@ -500,10 +503,12 @@ Object.class_eval do
   remove_const(:IPSocket)
   remove_const(:TCPSocket)
   remove_const(:TCPServer)
+  remove_const(:UDPSocket)
 
   const_set(:BasicSocket, Eventless::BasicSocket)
   const_set(:Socket, Eventless::Socket)
   const_set(:IPSocket, Eventless::IPSocket)
   const_set(:TCPSocket, Eventless::TCPSocket)
   const_set(:TCPServer, Eventless::TCPServer)
+  const_set(:UDPSocket, Eventless::UDPSocket)
 end
