@@ -50,7 +50,10 @@ Eventless has very experimental support for monkeypatching `Thread.new` to spawn
 It will probably crash or not work, but:
 
     $ git clone git://github.com/davidbalbert/eventless.git
-    $ cd eventless/examples # run some of these
+    $ cd eventless
+    $ bundle install
+      ...
+    $ cd examples # run some of these
 
 ##Test
 
@@ -106,7 +109,6 @@ The `-v` option can be used for a more verbose output, which includes method nam
     Eventless::BasicSocket is 17.92% complete [19/106]
         Implemented
           ::open
-          ::for_fd
       	  ::for_fd
       	  #write
 	  ...
