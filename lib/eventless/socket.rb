@@ -470,7 +470,7 @@ module Eventless
     end
 
     def initialize(hostname=nil, port)
-      raise "Eventless::TCPServer is not ready for prime time. Addrinfo.foreach blocks"
+      raise "Eventless::TCPServer is not ready for prime time. Addrinfo.foreach isn't asynchronous."
       unless hostname == false and port == false
         # XXX: addrinfo.foreach will block on dns resolution
         # need a thread pool to make it work properly
@@ -497,7 +497,7 @@ module Eventless
 
   class UDPSocket < IPSocket
     def initialize
-      raise "Eventless::UDPSocket hasn't been implemented yet"
+      raise "Eventless::UDPSocket hasn't been implemented yet."
     end
   end
 end
