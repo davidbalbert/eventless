@@ -9,7 +9,8 @@ classes = [
            Eventless::IPSocket,
            Eventless::TCPSocket,
            Eventless::TCPServer,
-           Eventless::UDPSocket
+           Eventless::UDPSocket,
+           Eventless::Addrinfo
           ]
 
 class Object

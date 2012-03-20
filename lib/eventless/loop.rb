@@ -64,6 +64,17 @@ module Eventless
       watcher
     end
 
+    def async
+      fiber = Fiber.current
+      watcher = Coolio::AsyncWatcher.new
+      watcher.on_signal do
+        watcher.detach
+        fiber.transfer
+      end
+
+      watcher
+    end
+
     def sleep(duration)
       fiber = Fiber.current
       watcher = timer(duration) { fiber.transfer }
