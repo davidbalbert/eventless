@@ -1,5 +1,6 @@
 require 'socket'
 require 'fcntl'
+
 module Eventless
   RealBasicSocket = ::BasicSocket
   RealSocket = ::Socket
@@ -10,7 +11,7 @@ module Eventless
   # We will do UDP sockets, but I haven't looked at them yet:
   RealUDPSocket = ::UDPSocket
 
-  # I haven't looked at this yet:
+  # I don't seem to have SOCKSSocket compiled into my ruby intepreter
   # RealSOCKSSocket = ::SOCKSSocket
 
   # Should we even support these?
@@ -469,6 +470,7 @@ module Eventless
     end
 
     def initialize(hostname=nil, port)
+      raise "Eventless::TCPServer is not ready for prime time. Addrinfo.foreach blocks"
       unless hostname == false and port == false
         # XXX: addrinfo.foreach will block on dns resolution
         # need a thread pool to make it work properly
@@ -494,6 +496,9 @@ module Eventless
   end
 
   class UDPSocket < IPSocket
+    def initialize
+      raise "Eventless::UDPSocket hasn't been implemented yet"
+    end
   end
 end
 
