@@ -102,9 +102,13 @@ module Eventless
         # Eventless.loop.transfer return addrs[0], but it doesn't. I'm not sure
         # why. If anyone knows how to fix it, let me know. I think closing around
         # addr is a bit hacky.
-        fiber.transfer
+        #
+        # This callback can be called in the calling (current) fiber, if it resolves
+        # hostname from /etc/hosts. Don't transfer if this happens.
+        fiber.transfer unless fiber == Fiber.current
       end
-      Eventless.loop.transfer
+      # addr will be not nil if we did a lookup in /etc/hosts
+      Eventless.loop.transfer unless addr
 
       addr
     end
