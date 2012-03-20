@@ -98,17 +98,17 @@ module Eventless
       Eventless.resolver.gethostbyname(hostname, Socket::AF_UNSPEC) do |name, aliases, faimly, *addrs|
         addr = addrs[0]
 
+        # This callback can be called in the calling (current) fiber, if it resolves
+        # hostname from /etc/hosts. If this is the case, just return addr
+        return addr if fiber == Fiber.current
+
         # XXX: I thought calling fiber.transfer(addrs[0]) would make
         # Eventless.loop.transfer return addrs[0], but it doesn't. I'm not sure
         # why. If anyone knows how to fix it, let me know. I think closing around
         # addr is a bit hacky.
-        #
-        # This callback can be called in the calling (current) fiber, if it resolves
-        # hostname from /etc/hosts. Don't transfer if this happens.
-        fiber.transfer unless fiber == Fiber.current
+        fiber.transfer
       end
-      # addr will be not nil if we did a lookup in /etc/hosts
-      Eventless.loop.transfer unless addr
+      Eventless.loop.transfer
 
       addr
     end
