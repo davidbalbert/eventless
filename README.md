@@ -106,7 +106,6 @@ The `-v` option can be used for a more verbose output, which includes method nam
     Eventless::BasicSocket is 17.92% complete [19/106]
         Implemented
           ::open
-          ::for_fd
       	  ::for_fd
       	  #write
 	  ...
