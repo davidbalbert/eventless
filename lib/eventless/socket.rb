@@ -345,6 +345,11 @@ module Eventless
       sock_pair
     end
 
+    def bind(addr)
+      STDERR.puts "bind"
+      addr = addr.to_sockaddr if addr.respond_to? :to_sockaddr
+      @socket.bind(addr)
+    end
 
     # XXX: eventually this may have a second command called timeout
     def wait(watcher)
@@ -400,8 +405,12 @@ module Eventless
       super(*args)
     end
 
-    def accept
-      super
+    def accept(*args)
+      super(*args)
+    end
+
+    def bind(*args)
+      super(*args)
     end
 
     def recvfrom(*args)
@@ -496,7 +505,6 @@ module Eventless
     end
 
     def initialize(hostname=nil, port)
-      raise "Eventless::TCPServer is not ready for prime time. Addrinfo.foreach isn't asynchronous."
       unless hostname == false and port == false
         # XXX: addrinfo.foreach will block on dns resolution
         # need a thread pool to make it work properly
@@ -504,7 +512,7 @@ module Eventless
           begin
             @socket = RealSocket.new(ai.afamily, ai.socktype, ai.protocol)
             @socket.setsockopt(:SOCKET, :REUSEADDR, true)
-            @socket.bind(ai)
+            bind(ai)
           rescue
             @socket.close
           else
