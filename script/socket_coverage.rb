@@ -18,6 +18,8 @@ class Object
   end
 end
 
+total_implemented = total_methods = 0
+
 classes.each do |c|
   stock_methods = Eventless.const_get("Real#{c.name.split('::').last}").all_methods
   eventless_methods = c.all_methods
@@ -33,6 +35,9 @@ classes.each do |c|
 
   not_implemented = stock_methods - eventless_methods
   implemented = stock_methods - not_implemented
+
+  total_methods += stock_methods.count
+  total_implemented += implemented.count
 
   pct_complete = (implemented.count.to_f / stock_methods.count) * 100
   pct_complete = pct_complete % 1 == 0 ? pct_complete.to_i : pct_complete.round(2)
@@ -51,4 +56,8 @@ classes.each do |c|
   end
 end
 
+pct_complete = (total_implemented.to_f / total_methods) * 100
+pct_complete = pct_complete % 1 == 0 ? pct_complete.to_i : pct_complete.round(2)
 
+puts
+puts "Total is #{pct_complete}% complete [#{total_implemented}/#{total_methods}]"
