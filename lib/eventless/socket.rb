@@ -141,6 +141,32 @@ module Eventless
       write($\) if $\ and objs.size > 0
     end
 
+    def putc(arg)
+      arg = arg.to_int.chr if arg.is_a?(Numeric)
+      write(arg.to_s[0])
+    end
+
+    def puts(*args)
+      STDERR.puts "puts"
+
+      if args.empty?
+        write("\n")
+      else
+        args.each do |arg|
+          ary = Array.try_convert(arg)
+          if ary
+            puts *ary
+          else
+            arg = arg.to_s
+            write(arg)
+            write("\n") unless arg[-1] == "\n"
+          end
+        end
+      end
+
+      nil
+    end
+
     ################
     # Receiving data
     BUFFER_LENGTH = 128*1024
