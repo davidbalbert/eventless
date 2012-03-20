@@ -50,6 +50,9 @@ Eventless has very experimental support for monkeypatching `Thread.new` to spawn
 It will probably crash or not work, but:
 
     $ git clone git://github.com/davidbalbert/eventless.git
+    $ cd eventless
+    $ bundle install
+      ...
     $ cd eventless/examples # run some of these
 
 ##Test
