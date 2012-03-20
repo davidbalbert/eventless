@@ -90,6 +90,27 @@ Remember, right now Eventless only works on Ruby 1.9.
 
 The current goal is to replace all blocking methods in `Socket` with API compatible versions that transfer control to the event loop rather than block. When in doubt, read the code for gevent, but write your code like a Rubyist would.
 
+Currently we are trying to monkey patch all the methods in the stock Ruby `socket` library.  The script in `script/socket_coverage.rb` can be used to how many methods have and have not been reimplemented eventless' socket library:
+
+    $ ruby script/socket_coverage.rb
+    Eventless::BasicSocket is 17.39% complete [4/23]
+    Eventless::Socket is 16.22% complete [6/37]
+    Eventless::IPSocket is 50% complete [2/4]
+    Eventless::TCPSocket is 0% complete [0/1]
+    Eventless::TCPServer is 25% complete [1/4]
+    Eventless::UDPSocket is 0% complete [0/4]
+
+The `-v` option can be used for a more verbose output, which includes method names:
+
+    $ ruby script/socket_coverage.rb -v
+    Eventless::BasicSocket is 17.92% complete [19/106]
+        Implemented
+          ::open
+          ::for_fd
+      	  ::for_fd
+      	  #write
+	  ...
+
 ##License
 
 Eventless is licensed under the MIT License. See LICENSE for more information.
