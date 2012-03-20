@@ -98,8 +98,10 @@ module Eventless
       Eventless.resolver.gethostbyname(hostname, Socket::AF_UNSPEC) do |name, aliases, faimly, *addrs|
         addr = addrs[0]
 
-        # This callback can be called in the calling (current) fiber, if it resolves
-        # hostname from /etc/hosts. If this is the case, just return addr
+        # NOTE: if c-ares resolves hostname from /etc/hosts,
+        # Cares#gethostbyname will call this block  _before_ returning. In that
+        # case, we haven't transfered to the event loop, so we can just return
+        # addr.
         return addr if fiber == Fiber.current
 
         # XXX: I thought calling fiber.transfer(addrs[0]) would make
