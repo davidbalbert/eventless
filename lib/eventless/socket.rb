@@ -108,8 +108,8 @@ module Eventless
       written = 0
 
       loop do
-        written += syswrite(str[written, str.length])
-        break if written == str.length
+        written += syswrite(str.byteslice(written, str.bytesize - written))
+        break if written == str.bytesize
       end
 
       str.length
