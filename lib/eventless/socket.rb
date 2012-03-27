@@ -202,7 +202,7 @@ module Eventless
     end
 
     def readpartial(length, buffer=nil)
-      length.to_int
+      length = length.to_int
       raise ArgumentError if length < 0
       STDERR.puts "readpartial"
 
