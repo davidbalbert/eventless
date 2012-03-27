@@ -5,8 +5,10 @@ module Eventless
   RealAddrinfo = ::Addrinfo
 
   class Addrinfo
-    def initialize(addrinfo)
-      @addrinfo = addrinfo
+    def initialize(sockaddr, *rest)
+      if sockaddr
+        @addrinfo = RealAddrinfo.new(sockaddr, *rest)
+      end
     end
 
     # wrapped instance methods
@@ -36,6 +38,12 @@ module Eventless
 
     def inspect
       "#<Eventless::Addrinfo:#{@addrinfo.inspect.split("Addrinfo:").last.chop}>"
+    end
+
+    private
+
+    def addrinfo=(addrinfo)
+      @addrinfo = addrinfo
     end
   end
 end

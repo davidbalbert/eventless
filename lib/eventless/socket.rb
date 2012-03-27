@@ -341,7 +341,7 @@ module Eventless
       STDERR.puts "accept"
       begin
         flags = @socket.fcntl(Fcntl::F_GETFL, 0)
-        sock_pair = @socket.accept_nonblock
+        real_socket, real_addrinfo = @socket.accept_nonblock
         @socket.fcntl(Fcntl::F_SETFL, flags)
       rescue IO::WaitReadable, Errno::EINTR
         @socket.fcntl(Fcntl::F_SETFL, flags)
@@ -349,7 +349,13 @@ module Eventless
         retry
       end
 
-      sock_pair
+      sock = Socket.new(false)
+      sock.__send__(:socket=, real_socket)
+
+      addrinfo = Eventless::Addrinfo.new(false)
+      addrinfo.send(:addrinfo=, real_addrinfo)
+
+      [sock, addrinfo]
     end
 
     def bind(addr)
