@@ -408,6 +408,13 @@ module Eventless
       end
     end
 
+    # instance methods
+    [:listen].each do |sym|
+      define_method(sym) do |*args|
+        @socket.__send__(sym, *args)
+      end
+    end
+
     def connect(*args)
       super(*args)
     end
