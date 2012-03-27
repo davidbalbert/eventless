@@ -11,8 +11,16 @@ module Eventless
       end
     end
 
+    def self._wrap(real_addrinfo)
+      addrinfo = new(false)
+      addrinfo.send(:addrinfo=, real_addrinfo)
+
+      addrinfo
+    end
+
     # wrapped instance methods
-    [:afamily, :socktype, :protocol, :to_sockaddr].each do |sym|
+    [:afamily, :socktype, :protocol,
+     :to_sockaddr, :ip_address, :ip_port].each do |sym|
       define_method(sym) do |*args|
         @addrinfo.send(sym, *args)
       end
@@ -29,6 +37,20 @@ module Eventless
       Thread.new do
         addrs = RealAddrinfo.getaddrinfo(*args).map { |ai| new(ai) }
         queue << addrs
+        watcher.signal
+      end
+      Eventless.loop.transfer
+
+      queue.shift
+    end
+
+    def getnameinfo(*args)
+      queue = Queue.new
+      watcher = Eventless.loop.async
+      Eventless.loop.attach(watcher)
+      Thread.new do
+        nameinfo = @addrinfo.getnameinfo(*args)
+        queue << nameinfo
         watcher.signal
       end
       Eventless.loop.transfer
