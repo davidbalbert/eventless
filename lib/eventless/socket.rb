@@ -148,6 +148,8 @@ module Eventless
       end
 
       write($\) if $\ and objs.size > 0
+
+      nil
     end
 
     def putc(arg)
