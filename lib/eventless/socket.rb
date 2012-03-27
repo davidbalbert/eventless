@@ -153,8 +153,11 @@ module Eventless
     end
 
     def putc(arg)
+      ret = arg
       arg = arg.to_int.chr if arg.is_a?(Numeric)
       write(arg.to_s[0])
+
+      ret
     end
 
     def puts(*args)
