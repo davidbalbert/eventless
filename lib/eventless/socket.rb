@@ -187,15 +187,18 @@ module Eventless
       buffer
     end
 
-    def readpartial(length=nil, buffer=nil)
-      raise ArgumentError if !length.nil? && length < 0
+    def readpartial(length, buffer=nil)
+      length.to_int
+      raise ArgumentError if length < 0
       STDERR.puts "readpartial"
 
+      buffer.clear if buffer
       buffer = "" if buffer.nil?
-      if byte_buffer.length >= length
+
+      if byte_buffer.bytesize >= length
         buffer << byte_buffer.byteslice!(0, length)
-      elsif byte_buffer.length > 0
-        buffer << byte_buffer.byteslice!(0, byte_buffer.length)
+      elsif byte_buffer.bytesize > 0
+        buffer << byte_buffer.byteslice!(0, byte_buffer.bytesize)
       else
         buffer << sysread(length)
       end
