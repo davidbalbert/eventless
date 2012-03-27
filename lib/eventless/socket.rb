@@ -193,9 +193,9 @@ module Eventless
 
       buffer = "" if buffer.nil?
       if byte_buffer.length >= length
-        buffer << byte_buffer.slice!(0, length)
+        buffer << byte_buffer.byteslice!(0, length)
       elsif byte_buffer.length > 0
-        buffer << byte_buffer.slice!(0, byte_buffer.length)
+        buffer << byte_buffer.byteslice!(0, byte_buffer.length)
       else
         buffer << sysread(length)
       end
@@ -208,38 +208,42 @@ module Eventless
       STDERR.puts "read" unless length == 1
 
       return "" if length == 0
+      buffer.clear if buffer
       buffer = "" if buffer.nil?
+
+      bytes = ByteBuffer.new
 
       if length.nil?
         loop do
           begin
-            buffer << sysread(BUFFER_LENGTH)
+            bytes << sysread(BUFFER_LENGTH)
           rescue EOFError
             break
           end
         end
       else
-        if byte_buffer.length >= length
-          return byte_buffer.slice!(0, length)
-        elsif byte_buffer.length > 0
-          buffer << byte_buffer.slice!(0, byte_buffer.length)
+        if byte_buffer.bytesize >= length
+          return byte_buffer.byteslice!(0, length)
+        elsif byte_buffer.bytesize > 0
+          bytes << byte_buffer.byteslice!(0, byte_buffer.bytesize)
         end
 
-        remaining = length - buffer.length
-        while buffer.length < length && remaining > 0
+        remaining = length - bytes.bytesize
+        while bytes.bytesize < length && remaining > 0
           begin
-            buffer << sysread(remaining > BUFFER_LENGTH ? remaining : BUFFER_LENGTH)
-            remaining = length - buffer.length
+            bytes << sysread(remaining > BUFFER_LENGTH ? BUFFER_LENGTH : remaining)
+            remaining = length - bytes.bytesize
           rescue EOFError
             break
           end
         end
       end
 
-      return nil if buffer.length == 0
-      if length and buffer.length > length
-        byte_buffer << buffer.slice!(length, buffer.length)
+      return nil if bytes.bytesize == 0
+      if length and bytes.bytesize > length
+        byte_buffer << bytes.byteslice!(length, buffer.bytesize)
       end
+      buffer << bytes.to_s
 
       buffer
     end
@@ -370,11 +374,11 @@ module Eventless
     end
 
     def byte_buffer
-      @buffer ||= ""
+      @buffer ||= ByteBuffer.new
     end
 
     def byte_buffer=(buffer)
-      @buffer = buffer
+      @buffer = ByteBuffer.new(buffer)
     end
   end
 
@@ -532,6 +536,20 @@ module Eventless
   class UDPSocket < IPSocket
     def initialize
       raise "Eventless::UDPSocket hasn't been implemented yet."
+    end
+  end
+
+ class ByteBuffer < String
+    def binslice!(*args)
+      old_enc = encoding
+
+      force_encoding('BINARY')
+      ret = slice!(*args)
+      force_encoding(old_enc)
+
+      ret.force_encoding(old_enc)
+
+      ret
     end
   end
 end
