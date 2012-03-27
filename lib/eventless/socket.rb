@@ -19,6 +19,13 @@ module Eventless
   # RealUNIXServer = ::UNIXServer
 
   class BasicSocket
+    def self._wrap(real_socket)
+      sock = self.new(false)
+      sock.__send__(:socket=, real_socket)
+
+      sock
+    end
+
     def self.for_fd(*args)
       new(*args)
     end
@@ -80,8 +87,10 @@ module Eventless
     end
 
     # IO.new is the same as IO.for_fd
-    def initialize(*args)
-      @socket = self.class.stock_class.for_fd(*args)
+    def initialize(fd, *rest)
+      if fd
+        @socket = self.class.stock_class.for_fd(fd, *rest)
+      end
     end
 
     ##############
@@ -353,11 +362,8 @@ module Eventless
         retry
       end
 
-      sock = Socket.new(false)
-      sock.__send__(:socket=, real_socket)
-
-      addrinfo = Eventless::Addrinfo.new(false)
-      addrinfo.send(:addrinfo=, real_addrinfo)
+      sock = Socket._wrap(real_socket)
+      addrinfo = Addrinfo._wrap(real_addrinfo)
 
       [sock, addrinfo]
     end
