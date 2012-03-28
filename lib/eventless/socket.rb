@@ -412,15 +412,22 @@ module Eventless
 
   class Socket < BasicSocket
     def self.for_fd(*args)
-      sock = new(false)
+      sock = new(false, false)
       sock.__send__(:socket=, stock_class.for_fd(*args))
 
       sock
     end
 
-    def initialize(domain, socket=nil, protocol=nil)
+    def self._wrap(real_socket)
+      sock = new(false, false)
+      sock.__send__(:socket=, real_socket)
+
+      sock
+    end
+
+    def initialize(domain, socktype, protocol=nil)
       unless domain == false
-        @socket = self.class.stock_class.new(domain, socket, protocol)
+        @socket = self.class.stock_class.new(domain, socktype, protocol)
       end
     end
 
