@@ -93,6 +93,18 @@ module Eventless
       rescue
       end
 
+      # NOTE: Force c-ares to behave like the system resolver, namely if there
+      # are any dots in the hostname, don't do a lookup with search domains.
+      #
+      # We're assuming ndots == 1 (see resolver(5) on OS X). The OS X system
+      # resolver makes a AAAA and A query at the same time when the address
+      # family is AF_UNSPEC. C-ares makes a AAAA query, if that fails, then a
+      # AAAA query with the search domain, and then finally an A query. Here we
+      # force c-ares to skip the search domain by appending a trailing "."
+      #
+      # Not yet tested on Linux.
+      hostname << "." if hostname.include? "." and hostname[-1] != "."
+
       fiber = Fiber.current
       addr = nil
       Eventless.resolver.gethostbyname(hostname, Socket::AF_UNSPEC) do |name, aliases, faimly, *addrs|
