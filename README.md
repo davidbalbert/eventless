@@ -82,11 +82,11 @@ Remember, right now Eventless only works on Ruby 1.9.
 - `IO#write*`
 - `timeout.rb`
 - `open-uri`
-- DNS resolution for `IPSocket.getaddress` and `Socket.(pack_)sockaddr_in`
+- DNS resolution with a thread pool resolver for `IPSocket.getaddress`, `Socket.pack_sockaddr_in`, `Addrinfo.getaddrinfo`, `Addrinfo.getnameinfo` and `Addrinfo.foreach`
 
 ###What doesn't work
 - All the other `Socket` code.
-- All other DNS resolution including `Addrinfo` class
+- All other DNS resolution
 - Everything else
 
 ##Contributing
