@@ -379,7 +379,7 @@ module Eventless
       # bind() can also take an Addrinfo, but it does a strict type check
       # before converting. Because Eventless::Addrinfo isn't an Addrinfo, we
       # have to do the conversion ourselves.
-      addr = addr.tosockaddr if addr.respond_to? :to_sockaddr
+      addr = addr.to_sockaddr if addr.respond_to? :to_sockaddr
       @socket.bind(addr)
     end
 
