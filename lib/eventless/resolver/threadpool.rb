@@ -1,5 +1,7 @@
 require 'socket'
 
+require 'ipaddress'
+
 require 'eventless/sockaddr'
 
 module Eventless
