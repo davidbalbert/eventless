@@ -25,8 +25,8 @@ module Eventless
 
     timeout = Timeout.new(timeout).start
 
-    #STDERR.puts "about to select", read_array.inspect, write_array.inspect
-    STDERR.puts "select"
+    #debug_puts "about to select", read_array.inspect, write_array.inspect
+    debug_puts "select"
 
     begin
       read_array.each do |io|

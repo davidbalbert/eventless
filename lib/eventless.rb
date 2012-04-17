@@ -9,6 +9,7 @@ require 'eventless/timeout'
 require 'eventless/event'
 require 'eventless/threadpool'
 require 'eventless/core_ext/string'
+require 'eventless/util'
 
 module Kernel
   alias_method :sleep_block, :sleep

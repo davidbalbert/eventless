@@ -25,7 +25,7 @@ module Eventless
   class Socket < BasicSocket
     class << self
       def pack_sockaddr_in(port, host)
-        STDERR.puts "Sockaddr.pack_sockaddr_in"
+        debug_puts "Sockaddr.pack_sockaddr_in"
 
         ip = IPAddress.parse(IPSocket.getaddress(host))
         family = ip.ipv6? ? Socket::AF_INET6 : Socket::AF_INET

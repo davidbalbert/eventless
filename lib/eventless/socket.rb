@@ -96,7 +96,7 @@ module Eventless
     ##############
     # Sending data
     def syswrite(*args)
-      STDERR.puts "syswrite"
+      debug_puts "syswrite"
       begin
         flags = @socket.fcntl(Fcntl::F_GETFL, 0)
         result = @socket.write_nonblock(*args)
@@ -111,7 +111,7 @@ module Eventless
     end
 
     def write(str)
-      STDERR.puts "write"
+      debug_puts "write"
 
       str = str.to_s
       written = 0
@@ -125,7 +125,7 @@ module Eventless
     end
 
     def sendmsg(*args)
-      STDERR.puts "sendmsg"
+      debug_puts "sendmsg"
       begin
         flags = @socket.fcntl(Fcntl::F_GETFL, 0)
         result = @socket.sendmsg_nonblock(*args)
@@ -161,7 +161,7 @@ module Eventless
     end
 
     def puts(*args)
-      STDERR.puts "puts"
+      debug_puts "puts"
 
       if args.empty?
         write("\n")
@@ -186,7 +186,7 @@ module Eventless
     BUFFER_LENGTH = 128*1024
 
     def sysread(*args)
-      STDERR.puts "sysread"
+      debug_puts "sysread"
       buffer = ""
       begin
         flags = @socket.fcntl(Fcntl::F_GETFL, 0)
@@ -204,7 +204,7 @@ module Eventless
     def readpartial(length, buffer=nil)
       length = length.to_int
       raise ArgumentError if length < 0
-      STDERR.puts "readpartial"
+      debug_puts "readpartial"
 
       buffer.clear if buffer
       buffer = "" if buffer.nil?
@@ -222,7 +222,7 @@ module Eventless
 
     def read(length=nil, buffer=nil)
       raise ArgumentError if !length.nil? && length < 0
-      STDERR.puts "read" unless length == 1
+      debug_puts "read" unless length == 1
 
       return "" if length == 0
       buffer.clear if buffer
@@ -276,7 +276,7 @@ module Eventless
     end
 
     def gets(sep=$/, limit=nil)
-      STDERR.puts "gets"
+      debug_puts "gets"
 
       if sep.kind_of? Numeric and limit.nil?
         limit = sep
@@ -301,7 +301,7 @@ module Eventless
     end
 
     def recv(*args)
-      STDERR.puts "recv"
+      debug_puts "recv"
       begin
         flags = @socket.fcntl(Fcntl::F_GETFL, 0)
         mesg = @socket.recv_nonblock(*args)
@@ -316,7 +316,7 @@ module Eventless
     end
 
     def recvmsg(*args)
-      STDERR.puts "recvmsg"
+      debug_puts "recvmsg"
       begin
         flags = @socket.fcntl(Fcntl::F_GETFL, 0)
         msg = @socket.recvmsg_nonblock(*args)
@@ -339,25 +339,25 @@ module Eventless
 
     # connect is private so we can call it from both Socket and TCPSocket
     def connect(*args)
-      STDERR.puts "connect"
+      debug_puts "connect"
       begin
         flags = @socket.fcntl(Fcntl::F_GETFL, 0)
         @socket.connect_nonblock(*args)
         @socket.fcntl(Fcntl::F_SETFL, flags)
       rescue IO::WaitWritable
         @socket.fcntl(Fcntl::F_SETFL, flags)
-        #STDERR.puts "connect: about to sleep"
+        #debug_puts "connect: about to sleep"
         wait(Eventless.loop.io(:write, self))
         retry
       rescue Errno::EISCONN
         @socket.fcntl(Fcntl::F_SETFL, flags)
       end
-      #STDERR.puts "Connected!"
+      #debug_puts "Connected!"
     end
 
     # accept is private so we can call it from both Socket and TCPServer
     def accept
-      STDERR.puts "accept"
+      debug_puts "accept"
       begin
         flags = @socket.fcntl(Fcntl::F_GETFL, 0)
         real_socket, real_addrinfo = @socket.accept_nonblock
@@ -375,7 +375,7 @@ module Eventless
     end
 
     def bind(addr)
-      STDERR.puts "bind"
+      debug_puts "bind"
 
       # bind() can also take an Addrinfo, but it does a strict type check
       # before converting. Because Eventless::Addrinfo isn't an Addrinfo, we
@@ -461,7 +461,7 @@ module Eventless
     end
 
     def recvfrom(*args)
-      STDERR.puts "recvfrom"
+      debug_puts "recvfrom"
       begin
         flags = @socket.fcntl(Fcntl::F_GETFL, 0)
         pair = @socket.recvfrom_nonblock(*args)
