@@ -14,7 +14,7 @@ module Eventless
 
   class ThreadPool
     # XXX: gevent uses maxsize of 10
-    def initialize(threadpool_size=10)
+    def initialize(threadpool_size=4)
       @queue = Queue.new
       @workers = []
 
@@ -26,9 +26,13 @@ module Eventless
               task = queue.pop
               task.call
             # TODO: Should indicate which fiber raised this exception
-            rescue StandardError, Exception => e
+            rescue StandardError => e
               p e.message
               puts e.backtrace
+            rescue Exception => e
+              p e.message
+              puts e.backtrace
+              exit 1
             end
           end
         end
