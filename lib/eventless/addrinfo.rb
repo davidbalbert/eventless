@@ -6,11 +6,7 @@ module Eventless
   class Addrinfo
     def initialize(sockaddr, *rest)
       if sockaddr
-        if sockaddr.class == RealAddrinfo
-          @addrinfo = sockaddr
-        else
-          @addrinfo = RealAddrinfo.new(sockaddr, *rest)
-        end
+        @addrinfo = RealAddrinfo.new(sockaddr, *rest)
       end
     end
 
@@ -39,7 +35,7 @@ module Eventless
       Eventless.loop.attach(watcher)
 
       Eventless.threadpool.schedule do
-        addrs = RealAddrinfo.getaddrinfo(*args).map { |ai| new(ai) }
+        addrs = RealAddrinfo.getaddrinfo(*args).map { |ai| _wrap(ai) }
         queue << addrs
         watcher.signal
       end
