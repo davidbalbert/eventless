@@ -1,3 +1,5 @@
+raise "Cares resolver is not ready yet, sorry"
+
 require 'socket'
 
 require 'cares'
