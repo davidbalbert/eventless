@@ -30,10 +30,6 @@ module Eventless
     Loop.default
   end
 
-  def self.resolver
-    Loop.default.resolver
-  end
-
   def self.thread_patched?
     false
   end

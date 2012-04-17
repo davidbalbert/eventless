@@ -15,7 +15,7 @@ end
 
 module Eventless
   class Loop
-    attr_reader :running, :fiber, :resolver
+    attr_reader :running, :fiber
 
     def self.default
       unless Eventless.thread_patched?
@@ -28,8 +28,6 @@ module Eventless
     def initialize
       @loop = Coolio::Loop.new
       @fiber = Fiber.new(Fiber.current) { run }
-
-      setup_resolver
     end
 
     def transfer(*args)
