@@ -9,3 +9,4 @@ TAGS
 tmp
 *.bundle
 *.so
+*.swo
