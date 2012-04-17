@@ -1,5 +1,4 @@
 require 'socket'
-require 'thread'
 
 module Eventless
   RealAddrinfo = ::Addrinfo
@@ -38,7 +37,7 @@ module Eventless
       queue = Queue.new
       watcher = Eventless.loop.async
       Eventless.loop.attach(watcher)
-      Thread.new do
+      Eventless.threadpool.schedule do
         addrs = RealAddrinfo.getaddrinfo(*args).map { |ai| new(ai) }
         queue << addrs
         watcher.signal
@@ -52,7 +51,7 @@ module Eventless
       queue = Queue.new
       watcher = Eventless.loop.async
       Eventless.loop.attach(watcher)
-      Thread.new do
+      Eventless.threadpool.schedule do
         nameinfo = @addrinfo.getnameinfo(*args)
         queue << nameinfo
         watcher.signal
