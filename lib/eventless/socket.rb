@@ -549,6 +549,7 @@ module Eventless
     def initialize(hostname=nil, port)
       unless hostname == false and port == false
         queue = Queue.new
+
         Eventless.threadpool.schedule do
           socket = nil
           Addrinfo.foreach(hostname, port, nil, :STREAM, nil, Socket::AI_PASSIVE) do |ai|

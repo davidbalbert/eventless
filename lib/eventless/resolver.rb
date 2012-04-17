@@ -11,6 +11,7 @@ module Eventless
       queue = Queue.new
       watcher = Eventless.loop.async
       Eventless.loop.attach(watcher)
+
       Eventless.threadpool.schedule do
         addr = RealIPSocket.getaddress(hostname)
         queue << addr

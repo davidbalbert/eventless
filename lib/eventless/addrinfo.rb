@@ -37,6 +37,7 @@ module Eventless
       queue = Queue.new
       watcher = Eventless.loop.async
       Eventless.loop.attach(watcher)
+
       Eventless.threadpool.schedule do
         addrs = RealAddrinfo.getaddrinfo(*args).map { |ai| new(ai) }
         queue << addrs
@@ -51,6 +52,7 @@ module Eventless
       queue = Queue.new
       watcher = Eventless.loop.async
       Eventless.loop.attach(watcher)
+
       Eventless.threadpool.schedule do
         nameinfo = @addrinfo.getnameinfo(*args)
         queue << nameinfo
