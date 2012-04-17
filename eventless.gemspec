@@ -20,8 +20,10 @@ Gem::Specification.new do |s|
   s.extensions = ["ext/sockaddr/extconf.rb"]
 
   s.add_dependency("cool.io")
-  s.add_dependency("ruby-cares")
-  s.add_dependency("ipaddress")
+
+  # for resolver/cares.rb, which doesn't fully work yet
+  # s.add_dependency("ruby-cares")
+  # s.add_dependency("ipaddress")
 
   s.add_development_dependency("rake-compiler")
 end
