@@ -7,7 +7,11 @@ module Eventless
   class Addrinfo
     def initialize(sockaddr, *rest)
       if sockaddr
-        @addrinfo = RealAddrinfo.new(sockaddr, *rest)
+        if sockaddr.class == RealAddrinfo
+          @addrinfo = sockaddr
+        else
+          @addrinfo = RealAddrinfo.new(sockaddr, *rest)
+        end
       end
     end
 
