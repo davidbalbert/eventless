@@ -43,7 +43,7 @@ Even though you've spawned five fibers that sleep for two seconds a piece, this 
 
 ###Threads
 
-Eventless has very experimental support for monkeypatching `Thread.new` to spawn a `Fiber` instead, effectively turing multithreaded programs into single threaded, evented programs. This doesn't work well yet and it is currently an explicit opt-in by putting `require 'eventless/thread'` in your code.
+Eventless has very experimental support for monkeypatching `Thread.new` to spawn a `Fiber` instead, effectively turing multithreaded programs into single threaded, evented programs. It's in compatible with `Eventless::ThreadPool` which is required for the DNS resolver, so it's currently disabled.
 
 ##Install
 

@@ -1,3 +1,9 @@
+# NOTE: This is a proof of concept for how we might monkeypatch Thread to spawn
+# new fibers instead of new threads. It doesn't currently work with
+# Eventless::ThreadPool, which is required for DNS resolution, therefore it is
+# disabled. It's also very hacky and untested. Maybe some day...
+raise "eventless/thread is not supported right now. Sorry!"
+
 require 'thread'
 
 module Eventless
