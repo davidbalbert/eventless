@@ -548,20 +548,24 @@ module Eventless
 
     def initialize(hostname=nil, port)
       unless hostname == false and port == false
-        # XXX: addrinfo.foreach will block on dns resolution
-        # need a thread pool to make it work properly
-        Addrinfo.foreach(hostname, port, nil, :STREAM, nil, Socket::AI_PASSIVE) do |ai|
-          begin
-            @socket = RealSocket.new(ai.afamily, ai.socktype, ai.protocol)
-            @socket.setsockopt(:SOCKET, :REUSEADDR, true)
-            bind(ai)
-          rescue
-            @socket.close
-          else
-            break
+        queue = Queue.new
+        Eventless.threadpool.schedule do
+          socket = nil
+          Addrinfo.foreach(hostname, port, nil, :STREAM, nil, Socket::AI_PASSIVE) do |ai|
+            begin
+              socket = RealSocket.new(ai.afamily, ai.socktype, ai.protocol)
+              socket.setsockopt(:SOCKET, :REUSEADDR, true)
+              socket.bind(ai.to_sockaddr)
+            rescue
+              socket.close
+            else
+              break
+            end
           end
+          queue << socket
         end
 
+        @socket = queue.shift
         @socket.listen(5)
       end
     end
