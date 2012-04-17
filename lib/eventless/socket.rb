@@ -331,6 +331,7 @@ module Eventless
     end
 
     def remote_address
+      # Does not block - uses getpeername(2)
       Addrinfo._wrap(@socket.remote_address)
     end
 
@@ -548,25 +549,18 @@ module Eventless
 
     def initialize(hostname=nil, port)
       unless hostname == false and port == false
-        queue = Queue.new
-
-        Eventless.threadpool.schedule do
-          socket = nil
-          Addrinfo.foreach(hostname, port, nil, :STREAM, nil, Socket::AI_PASSIVE) do |ai|
-            begin
-              socket = RealSocket.new(ai.afamily, ai.socktype, ai.protocol)
-              socket.setsockopt(:SOCKET, :REUSEADDR, true)
-              socket.bind(ai.to_sockaddr)
-            rescue
-              socket.close
-            else
-              break
-            end
+        Addrinfo.foreach(hostname, port, nil, :STREAM, nil, Socket::AI_PASSIVE) do |ai|
+          begin
+            @socket = RealSocket.new(ai.afamily, ai.socktype, ai.protocol)
+            @socket.setsockopt(:SOCKET, :REUSEADDR, true)
+            bind(ai)
+          rescue
+            @socket.close
+          else
+            break
           end
-          queue << socket
         end
 
-        @socket = queue.shift
         @socket.listen(5)
       end
     end
