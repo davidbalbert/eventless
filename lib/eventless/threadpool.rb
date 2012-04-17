@@ -22,8 +22,14 @@ module Eventless
       threadpool_size.times do
       @workers << Thread.new do
           loop do
-            task = queue.pop
-            task.call
+            begin
+              task = queue.pop
+              task.call
+            # TODO: Should indicate which fiber raised this exception
+            rescue StandardError, Exception => e
+              p e.message
+              puts e.backtrace
+            end
           end
         end
       end
