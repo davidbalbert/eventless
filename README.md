@@ -53,6 +53,8 @@ It will probably crash or not work, but:
     $ cd eventless
     $ bundle install
       ...
+    $ rake compile
+      ...
     $ cd examples # run some of these
 
 ##Test
