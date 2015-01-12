@@ -1,6 +1,8 @@
 Eventless
 =========
 
+**Note** Eventless is unmaintained. You definitely shouldn't use it for anything.
+
 Eventless aspires to be a concurrent networking library for Ruby that lets you write asynchronous, event driven code that looks like normal, blocking code. It uses Fibers, so it requires Ruby 1.9. It also uses Marc Lehmann's libev via Tony Arcieri's cool.io. Eventless is inspired heavily by [gevent](http://gevent.org).
 
 Right now it's more of an experiment than an actual library, but I'm working hard on that.
